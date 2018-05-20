@@ -6,11 +6,9 @@ import java.nio.file.DirectoryStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
-public class Main {
+public final class Main {
 
     public static void main(String[] args) throws IOException {
         if (args.length != 1) {
@@ -19,14 +17,16 @@ public class Main {
 
         Config config = new Config(Paths.get(args[0]));
 
-        Path path = Paths.get("/media/gardner/EXTERNAL 2TB/Videos");
+        Set<String> directories = config.getDirectories();
         List<String> fileNames = new ArrayList<>();
-        findFileAndDirectoryNames(path, fileNames, config.getExtensions());
-        for (String fileName : fileNames) {
-            System.out.println(fileName);
+        for (String directory : directories) {
+            findFileAndDirectoryNames(Paths.get(directory), fileNames, config.getExtensions());
+            for (String fileName : fileNames) {
+                System.out.println(fileName);
+            }
         }
-    }
 
+    }
 
     private static void findFileAndDirectoryNames(Path rootDirectory, List<String> fileNames, Set<String> extensions) throws IOException {
         DirectoryStream<Path> directory = Files.newDirectoryStream(rootDirectory);
@@ -36,6 +36,24 @@ public class Main {
                 fileNames.add(path.getFileName().toString());
             } else if (extensions.contains(com.google.common.io.Files.getFileExtension(path.getFileName().toString()))) {
                 fileNames.add(path.getFileName().toString());
+            }
+        }
+    }
+
+    private static void findAllFileExtensions(Path rootDirectory, Map<String, List<String>> extensions) throws IOException {
+        DirectoryStream<Path> directory = Files.newDirectoryStream(rootDirectory);
+        for (Path path : directory) {
+            if (Files.isDirectory(path)) {
+                findAllFileExtensions(path, extensions);
+            } else {
+                String extension = com.google.common.io.Files.getFileExtension(path.getFileName().toString());
+                if (extensions.containsKey(extension)) {
+                    extensions.get(extension).add(path.getFileName().toString());
+                } else {
+                    List<String> files = new ArrayList<>();
+                    files.add(path.getFileName().toString());
+                    extensions.put(extension, files);
+                }
             }
         }
     }
