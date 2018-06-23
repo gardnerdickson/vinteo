@@ -9,11 +9,10 @@ import javafx.geometry.Orientation;
 import javafx.geometry.Pos;
 import javafx.scene.Scene;
 import javafx.scene.control.Button;
+import javafx.scene.control.Label;
 import javafx.scene.control.ListView;
 import javafx.scene.control.TextField;
-import javafx.scene.layout.ColumnConstraints;
-import javafx.scene.layout.GridPane;
-import javafx.scene.layout.RowConstraints;
+import javafx.scene.layout.*;
 import javafx.stage.Stage;
 
 import java.awt.*;
@@ -74,33 +73,19 @@ public final class Main extends Application {
 
         primaryStage.setTitle("Vinteo");
 
-        GridPane rootPane = new GridPane();
-
-        ColumnConstraints columnInfo = new ColumnConstraints();
-        columnInfo.setPercentWidth(100);
-
-        RowConstraints rowInfo = new RowConstraints();
-        rowInfo.setPercentHeight(100);
-
-//        rootPane.setGridLinesVisible(true);
-        rootPane.setAlignment(Pos.BASELINE_CENTER);
-        rootPane.getColumnConstraints().add(columnInfo);
-//        rootPane.getRowConstraints().add(rowInfo);
+        VBox rootPane = new VBox();
         rootPane.setPadding(new Insets(10, 10, 10, 10));
-        rootPane.setHgap(10);
-        rootPane.setVgap(10);
-        rootPane.add(textField, 0, 0);
-        rootPane.add(resultView, 0, 1);
+        rootPane.setSpacing(10);
 
         GridPane buttonPane = new GridPane();
-//        buttonPane.setGridLinesVisible(true);
         buttonPane.setHgap(10);
         buttonPane.setVgap(10);
         buttonPane.setAlignment(Pos.BASELINE_CENTER);
         buttonPane.add(playButton, 0, 0);
         buttonPane.add(openFolderButton, 1, 0);
 
-        rootPane.add(buttonPane, 0 ,2);
+        rootPane.getChildren().addAll(textField, resultView, buttonPane);
+        VBox.setVgrow(resultView, Priority.ALWAYS);
 
         primaryStage.setScene(new Scene(rootPane, 500, 700));
         primaryStage.show();
