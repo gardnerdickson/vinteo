@@ -1,6 +1,9 @@
 package ca.vinteo;
 
+import com.google.common.base.Joiner;
 import com.google.common.collect.ImmutableMap;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.nio.file.DirectoryStream;
@@ -10,10 +13,15 @@ import java.util.*;
 
 public class Finder {
 
+    private static final Logger logger = LoggerFactory.getLogger(Finder.class);
+
     private final ImmutableMap<String, String> fileMap;
 
     public Finder(Set<Path> directories, Set<String> allowedExtensions) throws IOException {
-        this.fileMap = ImmutableMap.copyOf(findAllFilePaths(directories, allowedExtensions));
+        logger.info("Finding all files in directories: '{}'", Joiner.on(", '").join(directories));
+        logger.info("Filtering on extensions: {}", Joiner.on(", ").join(allowedExtensions));
+        fileMap = ImmutableMap.copyOf(findAllFilePaths(directories, allowedExtensions));
+        logger.info("Found {} video items.", fileMap.size());
     }
 
     public List<String> findLike(String text) {

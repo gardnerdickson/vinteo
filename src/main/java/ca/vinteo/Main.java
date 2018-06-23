@@ -9,13 +9,16 @@ import javafx.geometry.Orientation;
 import javafx.geometry.Pos;
 import javafx.scene.Scene;
 import javafx.scene.control.Button;
-import javafx.scene.control.Label;
 import javafx.scene.control.ListView;
 import javafx.scene.control.TextField;
-import javafx.scene.layout.*;
+import javafx.scene.layout.GridPane;
+import javafx.scene.layout.Priority;
+import javafx.scene.layout.VBox;
 import javafx.stage.Stage;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
-import java.awt.*;
+import java.awt.Desktop;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -24,6 +27,8 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 public final class Main extends Application {
+
+    private static final Logger logger = LoggerFactory.getLogger(Main.class);
 
     public static void main(String[] args) {
         launch(args);
@@ -36,10 +41,14 @@ public final class Main extends Application {
             throw new IllegalArgumentException("Expected exactly 1 parameter. Got " + commandLineArguments.getRaw().size());
         }
         Config config = new Config(Paths.get(commandLineArguments.getRaw().get(0)));
-
         Set<Path> directoryPaths = config.getDirectories().stream().map(dir -> Paths.get(dir)).collect(Collectors.toSet());
         Finder finder = new Finder(directoryPaths, config.getExtensions());
+        setupUi(primaryStage, finder);
+        primaryStage.show();
+    }
 
+
+    private void setupUi(Stage primaryStage, Finder finder) {
         ObservableList<String> results = FXCollections.observableArrayList();
         results.addAll(finder.results().keySet());
 
@@ -52,7 +61,7 @@ public final class Main extends Application {
         ListView<String> resultView = new ListView<>(results);
         resultView.setOrientation(Orientation.VERTICAL);
         resultView.getSelectionModel().selectedItemProperty().addListener((observable, oldValue, newValue) -> {
-            System.out.println("Selection changed to " + newValue);
+            logger.info("Selection changed to '{}'", newValue);
         });
 
         Button playButton = new Button("Play with VLC");
@@ -88,13 +97,13 @@ public final class Main extends Application {
         VBox.setVgrow(resultView, Priority.ALWAYS);
 
         primaryStage.setScene(new Scene(rootPane, 500, 700));
-        primaryStage.show();
     }
 
 
     private static void playWithVlc(Path filename) throws IOException {
         Runtime runtime = Runtime.getRuntime();
         String[] command = new String[]{"vlc", "--fullscreen", "--sub-track", "999", filename.toString()};
+        logger.info("Opening '{}' with VLC. Executing command: {}", filename.toString(), command);
         runtime.exec(command);
     }
 
@@ -103,6 +112,7 @@ public final class Main extends Application {
         Path directory = Files.isRegularFile(filename) ? filename.getParent() : filename;
         new Thread(() -> {
             try {
+                logger.info("Opening directory in file explorer: '{}'", directory);
                 Desktop.getDesktop().open(directory.toFile());
             } catch (IOException e) {
                 throw new RuntimeException("Failed to open directory: " + directory, e);
