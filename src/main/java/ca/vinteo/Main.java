@@ -4,22 +4,24 @@ package ca.vinteo;
 import javafx.application.Application;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
+import javafx.geometry.Insets;
 import javafx.geometry.Orientation;
+import javafx.geometry.Pos;
 import javafx.scene.Scene;
 import javafx.scene.control.Button;
 import javafx.scene.control.ListView;
 import javafx.scene.control.TextField;
+import javafx.scene.layout.ColumnConstraints;
 import javafx.scene.layout.GridPane;
+import javafx.scene.layout.RowConstraints;
 import javafx.stage.Stage;
 
 import java.awt.*;
 import java.io.IOException;
-import java.nio.file.DirectoryStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.*;
-import java.util.List;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 public final class Main extends Application {
@@ -36,13 +38,11 @@ public final class Main extends Application {
         }
         Config config = new Config(Paths.get(commandLineArguments.getRaw().get(0)));
 
-        Map<String, String> fileItems = findAllFilePaths(config.getDirectories().stream().map(dir -> Paths.get(dir)).collect(Collectors.toList()), config.getExtensions());
-        Finder finder = new Finder(new ArrayList<>(fileItems.keySet()));
-
-        primaryStage.setTitle("Vinteo");
+        Set<Path> directoryPaths = config.getDirectories().stream().map(dir -> Paths.get(dir)).collect(Collectors.toSet());
+        Finder finder = new Finder(directoryPaths, config.getExtensions());
 
         ObservableList<String> results = FXCollections.observableArrayList();
-        results.addAll(finder.all());
+        results.addAll(finder.results().keySet());
 
         TextField textField = new TextField();
         textField.textProperty().addListener((observable, oldValue, newValue) -> {
@@ -60,7 +60,7 @@ public final class Main extends Application {
         playButton.setOnAction(event -> {
             String filename = resultView.getSelectionModel().getSelectedItem();
             try {
-                playWithVlc(Paths.get(fileItems.get(filename)));
+                playWithVlc(Paths.get(finder.results().get(filename)));
             } catch (IOException e) {
                 throw new RuntimeException("Failed to play file: " + filename, e);
             }
@@ -69,94 +69,41 @@ public final class Main extends Application {
         Button openFolderButton = new Button("Open folder");
         openFolderButton.setOnAction(event -> {
             String filename = resultView.getSelectionModel().getSelectedItem();
-            openFolder(Paths.get(fileItems.get(filename)));
+            openFolder(Paths.get(finder.results().get(filename)));
         });
 
+        primaryStage.setTitle("Vinteo");
 
         GridPane rootPane = new GridPane();
+
+        ColumnConstraints columnInfo = new ColumnConstraints();
+        columnInfo.setPercentWidth(100);
+
+        RowConstraints rowInfo = new RowConstraints();
+        rowInfo.setPercentHeight(100);
+
+//        rootPane.setGridLinesVisible(true);
+        rootPane.setAlignment(Pos.BASELINE_CENTER);
+        rootPane.getColumnConstraints().add(columnInfo);
+//        rootPane.getRowConstraints().add(rowInfo);
+        rootPane.setPadding(new Insets(10, 10, 10, 10));
         rootPane.setHgap(10);
         rootPane.setVgap(10);
-        rootPane.addRow(0, textField);
-        rootPane.addRow(1, resultView);
-        rootPane.addRow(2, playButton, openFolderButton);
+        rootPane.add(textField, 0, 0);
+        rootPane.add(resultView, 0, 1);
+
+        GridPane buttonPane = new GridPane();
+//        buttonPane.setGridLinesVisible(true);
+        buttonPane.setHgap(10);
+        buttonPane.setVgap(10);
+        buttonPane.setAlignment(Pos.BASELINE_CENTER);
+        buttonPane.add(playButton, 0, 0);
+        buttonPane.add(openFolderButton, 1, 0);
+
+        rootPane.add(buttonPane, 0 ,2);
+
         primaryStage.setScene(new Scene(rootPane, 500, 700));
-
         primaryStage.show();
-    }
-
-
-    private List<String> findAllFilesAndDirectories(Iterable<Path> rootDirectories, Set<String> extensions) throws IOException {
-        List<String> fileItems = new ArrayList<>();
-        for (Path directory : rootDirectories) {
-            DirectoryStream<Path> directoryStream = Files.newDirectoryStream(directory);
-            for (Path path : directoryStream) {
-                if (Files.isDirectory(path)) {
-                    fileItems.add(path.getFileName().toString());
-                    fileItems.addAll(findAllFilesAndDirectories(Collections.singletonList(path), extensions));
-                } else if (extensions.contains(com.google.common.io.Files.getFileExtension(path.getFileName().toString()))) {
-                    fileItems.add(path.getFileName().toString());
-                }
-            }
-        }
-        return fileItems;
-    }
-
-    private Map<String, String> findAllFilePaths(Iterable<Path> rootDirectories, Set<String> extensions) throws IOException {
-        Map<String, String> fileItems = new HashMap<>();
-        for (Path directory : rootDirectories) {
-            DirectoryStream<Path> directoryStream = Files.newDirectoryStream(directory);
-            for (Path path : directoryStream) {
-                if (Files.isDirectory(path)) {
-                    fileItems.putAll(findAllFilePaths(Collections.singletonList(path), extensions));
-                }
-                if (Files.isRegularFile(path) && extensions.contains(com.google.common.io.Files.getFileExtension(path.getFileName().toString()))) {
-                    fileItems.put(path.getFileName().toString(), path.toString());
-                }
-            }
-        }
-        return fileItems;
-    }
-
-
-
-    private static void findFileAndDirectoryNames(Path rootDirectory, List<String> fileNames, Set<String> extensions) throws IOException {
-        DirectoryStream<Path> directory = Files.newDirectoryStream(rootDirectory);
-        for (Path path : directory) {
-            if (Files.isDirectory(path)) {
-                findFileAndDirectoryNames(path, fileNames, extensions);
-                fileNames.add(path.getFileName().toString());
-            } else if (extensions.contains(com.google.common.io.Files.getFileExtension(path.getFileName().toString()))) {
-                fileNames.add(path.getFileName().toString());
-            }
-        }
-    }
-
-    private static void findAndPrintAllFilesAndDirectories(Set<String> directories, Set<String> extensionInclusions) throws IOException {
-        List<String> fileNames = new ArrayList<>();
-        for (String directory : directories) {
-            findFileAndDirectoryNames(Paths.get(directory), fileNames, extensionInclusions);
-            for (String fileName : fileNames) {
-                System.out.println(fileName);
-            }
-        }
-    }
-
-    private static void findAllFileExtensions(Path rootDirectory, Map<String, List<String>> extensions) throws IOException {
-        DirectoryStream<Path> directory = Files.newDirectoryStream(rootDirectory);
-        for (Path path : directory) {
-            if (Files.isDirectory(path)) {
-                findAllFileExtensions(path, extensions);
-            } else {
-                String extension = com.google.common.io.Files.getFileExtension(path.getFileName().toString());
-                if (extensions.containsKey(extension)) {
-                    extensions.get(extension).add(path.getFileName().toString());
-                } else {
-                    List<String> files = new ArrayList<>();
-                    files.add(path.getFileName().toString());
-                    extensions.put(extension, files);
-                }
-            }
-        }
     }
 
 
