@@ -1,6 +1,7 @@
 package ca.vinteo;
 
 
+import com.sun.javafx.scene.control.skin.LabeledText;
 import javafx.application.Application;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
@@ -11,6 +12,7 @@ import javafx.scene.Scene;
 import javafx.scene.control.Button;
 import javafx.scene.control.ListView;
 import javafx.scene.control.TextField;
+import javafx.scene.input.MouseButton;
 import javafx.scene.layout.GridPane;
 import javafx.scene.layout.Priority;
 import javafx.scene.layout.VBox;
@@ -63,6 +65,23 @@ public final class Main extends Application {
         resultView.getSelectionModel().selectedItemProperty().addListener((observable, oldValue, newValue) -> {
             logger.info("Selection changed to '{}'", newValue);
         });
+
+        resultView.setOnMouseClicked((event) -> {
+            LabeledText selectedItem = (LabeledText) event.getTarget();
+            Path filePath = Paths.get(finder.results().get(selectedItem.getText()));
+            if (event.getButton() == MouseButton.PRIMARY && event.getClickCount() == 2) {
+                logger.info("Detected [double click]");
+                try {
+                    playWithVlc(filePath);
+                } catch (IOException e) {
+                    throw new RuntimeException("Failed to play '" + filePath.toString() + "'", e);
+                }
+            } else if (event.isControlDown() && event.getButton() == MouseButton.PRIMARY) {
+                logger.info("Detected [ctrl + left click]");
+                openFolder(filePath);
+            }
+        });
+
 
         Button playButton = new Button("Play with VLC");
         playButton.setOnAction(event -> {
