@@ -45,12 +45,12 @@ public final class Main extends Application {
         Config config = new Config(Paths.get(commandLineArguments.getRaw().get(0)));
         Set<Path> directoryPaths = config.getDirectories().stream().map(dir -> Paths.get(dir)).collect(Collectors.toSet());
         Finder finder = new Finder(directoryPaths, config.getExtensions());
-        setupUi(primaryStage, finder);
+        setupUi(primaryStage, finder, config);
         primaryStage.show();
     }
 
 
-    private void setupUi(Stage primaryStage, Finder finder) {
+    private void setupUi(Stage primaryStage, Finder finder, Config config) {
         ObservableList<String> results = FXCollections.observableArrayList();
         results.addAll(finder.results().keySet());
 
@@ -72,7 +72,7 @@ public final class Main extends Application {
             if (event.getButton() == MouseButton.PRIMARY && event.getClickCount() == 2) {
                 logger.info("Detected [double click]");
                 try {
-                    playWithVlc(filePath);
+                    playWithVlc(filePath, config.getVlcCommand());
                 } catch (IOException e) {
                     throw new RuntimeException("Failed to play '" + filePath.toString() + "'", e);
                 }
@@ -87,7 +87,7 @@ public final class Main extends Application {
         playButton.setOnAction(event -> {
             String filename = resultView.getSelectionModel().getSelectedItem();
             try {
-                playWithVlc(Paths.get(finder.results().get(filename)));
+                playWithVlc(Paths.get(finder.results().get(filename)), config.getVlcCommand());
             } catch (IOException e) {
                 throw new RuntimeException("Failed to play file: " + filename, e);
             }
@@ -119,9 +119,9 @@ public final class Main extends Application {
     }
 
 
-    private static void playWithVlc(Path filename) throws IOException {
+    private static void playWithVlc(Path filename, String vlcExec) throws IOException {
         Runtime runtime = Runtime.getRuntime();
-        String[] command = new String[]{"vlc", "--fullscreen", "--sub-track", "999", filename.toString()};
+        String[] command = new String[]{vlcExec, "--fullscreen", "--sub-track", "999", filename.toString()};
         logger.info("Opening '{}' with VLC. Executing command: {}", filename.toString(), command);
         runtime.exec(command);
     }
