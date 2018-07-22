@@ -19,6 +19,7 @@ public final class Config {
     private final ImmutableSet<String> extensions;
     private final ImmutableSet<String> directories;
     private final String vlcCommand;
+    private final String sqliteFile;
 
     Config(Path configFilePath) throws IOException {
         Properties properties = new Properties();
@@ -52,6 +53,11 @@ public final class Config {
             directories = ImmutableSet.copyOf(directoryProperties);
         }
 
+        {
+            Optional<String> sqliteFileProp = Optional.ofNullable(properties.getProperty("sqlite.file"));
+            sqliteFile = sqliteFileProp.orElseThrow(() -> new NoSuchElementException("'sqlite.file' property not found."));
+        }
+
     }
 
     public ImmutableSet<String> getExtensions() {
@@ -64,6 +70,10 @@ public final class Config {
 
     public String getVlcCommand() {
         return vlcCommand;
+    }
+
+    public String getSqliteFile() {
+        return sqliteFile;
     }
 
 }
