@@ -3,9 +3,13 @@ package ca.vinteo;
 
 import ca.vinteo.repository.InitializationRepository;
 import ca.vinteo.repository.RepositoryException;
+import ca.vinteo.ui.EventMediator;
 import ca.vinteo.ui.MainWindow;
-import ca.vinteo.ui.MainWindowHandler;
+import ca.vinteo.ui.SettingsWindow;
+import ca.vinteo.util.DesktopUtil;
+import ca.vinteo.util.VlcLauncher;
 import javafx.application.Application;
+import javafx.collections.FXCollections;
 import javafx.stage.Stage;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -41,17 +45,19 @@ public final class Main extends Application {
             initializationRepository.executeSetup();
         }
 
+        EventMediator eventMediator = new EventMediator();
+
         Set<Path> directoryPaths = config.getDirectories().stream().map(dir -> Paths.get(dir)).collect(Collectors.toSet());
-        Finder finder = new Finder(directoryPaths, config.getExtensions());
-        setupUi(primaryStage, finder, config);
+        Finder finder = new Finder(directoryPaths, config.getExtensions(), eventMediator);
+
+        new DesktopUtil(eventMediator);
+        new VlcLauncher(config.getVlcCommand(), eventMediator);
+
+        MainWindow mainWindow = new MainWindow(primaryStage, eventMediator, FXCollections.observableArrayList(finder.results().keySet()));
+        mainWindow.setup();
+
+        new SettingsWindow(eventMediator);
         primaryStage.show();
-    }
-
-
-    private void setupUi(Stage primaryStage, Finder finder, Config config) {
-        MainWindowHandler mainWindowHandler = new MainWindowHandler(finder, config.getVlcCommand());
-        MainWindow mainWindow = new MainWindow(primaryStage, mainWindowHandler);
-        mainWindow.start(finder.results().keySet());
     }
 
 }

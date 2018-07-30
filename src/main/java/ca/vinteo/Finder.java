@@ -1,5 +1,6 @@
 package ca.vinteo;
 
+import ca.vinteo.ui.EventMediator;
 import com.google.common.base.Joiner;
 import com.google.common.collect.ImmutableMap;
 import org.slf4j.Logger;
@@ -17,11 +18,12 @@ public class Finder {
 
     private final ImmutableMap<String, String> fileMap;
 
-    public Finder(Set<Path> directories, Set<String> allowedExtensions) throws IOException {
+    public Finder(Set<Path> directories, Set<String> allowedExtensions, EventMediator eventMediator) throws IOException {
         logger.info("Finding all files in directories: '{}'", Joiner.on(", '").join(directories));
         logger.info("Filtering on extensions: {}", Joiner.on(", ").join(allowedExtensions));
         fileMap = ImmutableMap.copyOf(findAllFilePaths(directories, allowedExtensions));
         logger.info("Found {} video items.", fileMap.size());
+        eventMediator.setFinder(this);
     }
 
     public List<String> findLike(String text) {
