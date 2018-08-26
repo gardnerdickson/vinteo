@@ -26,11 +26,12 @@ public class Finder {
         eventMediator.setFinder(this);
     }
 
-    public List<String> findLike(String text) {
+    public List<String> findLike(String query) {
         List<String> results = new ArrayList<>();
-        for (String key : fileMap.keySet()) {
-            if (key.contains(text)) {
-                results.add(key);
+        String lowerCaseQuery = query.toLowerCase();
+        for (String file : fileMap.keySet()) {
+            if (file.toLowerCase().contains(lowerCaseQuery)) {
+                results.add(file);
             }
         }
         return results;
@@ -56,6 +57,5 @@ public class Finder {
         }
         return fileItems;
     }
-
 
 }
