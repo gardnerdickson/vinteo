@@ -10,24 +10,24 @@ import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
 
-public class UserConfigurationRepository extends FileRepository {
+public class UserSettingsRepository extends FileRepository {
 
     private final Gson parser;
 
-    public UserConfigurationRepository(Path fileLocation) {
+    public UserSettingsRepository(Path fileLocation) {
         super(fileLocation);
         parser = new GsonBuilder().setPrettyPrinting().create();
     }
 
-    public UserConfiguration load() throws IOException {
+    public UserSettings load() throws IOException {
         try (JsonReader reader = new JsonReader(Files.newReader(fileLocation.toFile(), StandardCharsets.UTF_8))) {
-            return parser.fromJson(reader, UserConfiguration.class);
+            return parser.fromJson(reader, UserSettings.class);
         }
     }
 
-    public void save(UserConfiguration userConfiguration) throws IOException {
+    public void save(UserSettings userSettings) throws IOException {
         try (FileWriter writer = new FileWriter(fileLocation.toFile())) {
-            parser.toJson(userConfiguration, UserConfiguration.class, writer);
+            parser.toJson(userSettings, UserSettings.class, writer);
         }
     }
 

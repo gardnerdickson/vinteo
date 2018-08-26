@@ -25,21 +25,21 @@ public final class ApplicationConfiguration {
         properties.load(Files.newInputStream(configFilePath));
 
         {
-            Optional<String> vlcCommandProp = Optional.ofNullable(properties.getProperty("command.vlc"));
-            vlcCommand = vlcCommandProp.orElseGet(() -> {
+            Optional<String> property = Optional.ofNullable(properties.getProperty("command.vlc"));
+            vlcCommand = property.orElseGet(() -> {
                 logger.info("'command.vlc property not found. Using default.'");
                 return VLC_DEFAULT;
             });
         }
 
         {
-            Optional<String> userSettingsFileProp = Optional.ofNullable(properties.getProperty("usersettings.file"));
-            userSettingsFile = userSettingsFileProp.orElseThrow(() -> new NoSuchElementException("'usersettings.file' property not found."));
+            Optional<String> property = Optional.ofNullable(properties.getProperty("usersettings.file"));
+            userSettingsFile = property.orElseThrow(() -> new NoSuchElementException("'usersettings.file' property not found."));
         }
 
         {
-            Optional<String> sqliteFileProp = Optional.ofNullable(properties.getProperty("sqlite.file"));
-            sqliteFile = sqliteFileProp.orElseThrow(() -> new NoSuchElementException("'sqlite.file' property not found."));
+            Optional<String> property = Optional.ofNullable(properties.getProperty("sqlite.file"));
+            sqliteFile = property.orElseThrow(() -> new NoSuchElementException("'sqlite.file' property not found."));
         }
 
     }

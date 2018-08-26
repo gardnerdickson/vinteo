@@ -3,8 +3,8 @@ package ca.vinteo;
 
 import ca.vinteo.repository.InitializationRepository;
 import ca.vinteo.repository.RepositoryException;
-import ca.vinteo.repository.UserConfiguration;
-import ca.vinteo.repository.UserConfigurationRepository;
+import ca.vinteo.repository.UserSettings;
+import ca.vinteo.repository.UserSettingsRepository;
 import ca.vinteo.ui.EventMediator;
 import ca.vinteo.ui.MainWindow;
 import ca.vinteo.ui.SettingsWindow;
@@ -49,11 +49,11 @@ public final class Main extends Application {
 
         EventMediator eventMediator = new EventMediator();
 
-        UserConfigurationRepository userConfigRepo = new UserConfigurationRepository(Paths.get(config.getUserSettingsFile()));
-        UserConfiguration userConfiguration = userConfigRepo.load();
+        UserSettingsRepository userSettingsRepo = new UserSettingsRepository(Paths.get(config.getUserSettingsFile()));
+        UserSettings userSettings = userSettingsRepo.load();
 
-        Set<Path> directoryPaths = userConfiguration.getDirectories().stream().map(dir -> Paths.get(dir)).collect(Collectors.toSet());
-        Finder finder = new Finder(directoryPaths, userConfiguration.getFileExtensions(), eventMediator);
+        Set<Path> directoryPaths = userSettings.getDirectories().stream().map(dir -> Paths.get(dir)).collect(Collectors.toSet());
+        Finder finder = new Finder(directoryPaths, userSettings.getFileExtensions(), eventMediator);
 
         new DesktopUtil(eventMediator);
         new VlcLauncher(config.getVlcCommand(), eventMediator);
@@ -61,7 +61,7 @@ public final class Main extends Application {
         MainWindow mainWindow = new MainWindow(primaryStage, eventMediator, FXCollections.observableArrayList(finder.results().keySet()));
         mainWindow.setup();
 
-        new SettingsWindow(eventMediator);
+        new SettingsWindow(eventMediator, userSettingsRepo);
         primaryStage.show();
     }
 

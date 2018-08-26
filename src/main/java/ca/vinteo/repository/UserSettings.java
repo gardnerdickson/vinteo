@@ -3,7 +3,7 @@ package ca.vinteo.repository;
 import java.util.List;
 import java.util.Set;
 
-public class UserConfiguration {
+public class UserSettings {
 
     private List<String> directories;
     private Set<String> fileExtensions;
