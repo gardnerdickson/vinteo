@@ -4,7 +4,7 @@ import com.google.common.collect.ImmutableList;
 
 import java.sql.*;
 
-public class DirectoryRepository extends DataRepository {
+public class DirectoryRepository extends SqliteRepository {
 
     private static final String FIND_ALL = "SELECT * FROM directory";
     private static final String INSERT = "INSERT INTO directory (path) values (?)";

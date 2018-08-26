@@ -3,6 +3,8 @@ package ca.vinteo;
 
 import ca.vinteo.repository.InitializationRepository;
 import ca.vinteo.repository.RepositoryException;
+import ca.vinteo.repository.UserConfiguration;
+import ca.vinteo.repository.UserConfigurationRepository;
 import ca.vinteo.ui.EventMediator;
 import ca.vinteo.ui.MainWindow;
 import ca.vinteo.ui.SettingsWindow;
@@ -36,7 +38,7 @@ public final class Main extends Application {
         if (commandLineArguments.getRaw().size() != 1) {
             throw new IllegalArgumentException("Expected exactly 1 parameter. Got " + commandLineArguments.getRaw().size());
         }
-        Config config = new Config(Paths.get(commandLineArguments.getRaw().get(0)));
+        ApplicationConfiguration config = new ApplicationConfiguration(Paths.get(commandLineArguments.getRaw().get(0)));
 
         // If the application has not been run before. Execute first time setup.
         if (Files.notExists(Paths.get(config.getSqliteFile()))) {
@@ -47,8 +49,11 @@ public final class Main extends Application {
 
         EventMediator eventMediator = new EventMediator();
 
-        Set<Path> directoryPaths = config.getDirectories().stream().map(dir -> Paths.get(dir)).collect(Collectors.toSet());
-        Finder finder = new Finder(directoryPaths, config.getExtensions(), eventMediator);
+        UserConfigurationRepository userConfigRepo = new UserConfigurationRepository(Paths.get(config.getUserSettingsFile()));
+        UserConfiguration userConfiguration = userConfigRepo.load();
+
+        Set<Path> directoryPaths = userConfiguration.getDirectories().stream().map(dir -> Paths.get(dir)).collect(Collectors.toSet());
+        Finder finder = new Finder(directoryPaths, userConfiguration.getFileExtensions(), eventMediator);
 
         new DesktopUtil(eventMediator);
         new VlcLauncher(config.getVlcCommand(), eventMediator);

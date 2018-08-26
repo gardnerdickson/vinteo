@@ -11,7 +11,7 @@ import java.sql.DriverManager;
 import java.sql.SQLException;
 import java.util.Scanner;
 
-public class InitializationRepository extends DataRepository {
+public class InitializationRepository extends SqliteRepository {
 
     private static final String SETUP_SCRIPT_RESOURCE = "setup.sql";
 

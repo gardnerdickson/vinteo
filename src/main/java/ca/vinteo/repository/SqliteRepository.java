@@ -1,10 +1,10 @@
 package ca.vinteo.repository;
 
-public abstract class DataRepository {
+public abstract class SqliteRepository {
 
     protected String connectionString;
 
-    public DataRepository(String connectionString) {
+    public SqliteRepository(String connectionString) {
         this.connectionString = connectionString;
     }
 }
