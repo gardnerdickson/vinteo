@@ -1,6 +1,8 @@
 package ca.vinteo.ui;
 
 import ca.vinteo.Finder;
+import ca.vinteo.repository.UserSettings;
+import ca.vinteo.repository.UserSettingsRepository;
 import ca.vinteo.util.DesktopUtil;
 import ca.vinteo.util.VlcLauncher;
 import org.slf4j.Logger;
@@ -17,15 +19,18 @@ public class EventMediator {
 
     private MainWindow mainWindow;
     private SettingsWindow settingsWindow;
+    private AddDirectoryWindow addDirectoryWindow;
     private Finder finder;
     private VlcLauncher vlcLauncher;
     private DesktopUtil desktopUtil;
+    private UserSettingsRepository userSettingsRepository;
+    private UserSettings userSettings;
 
     public void setMainWindow(MainWindow mainWindow) {
         this.mainWindow = mainWindow;
     }
 
-    public void setSettingsWindow(SettingsWindow settingsWindow) {
+    public void setSettingsWindow(SettingsWindow settingsWindow) throws IOException {
         this.settingsWindow = settingsWindow;
     }
 
@@ -41,6 +46,15 @@ public class EventMediator {
         this.desktopUtil = desktopUtil;
     }
 
+    public void setUserSettingsRepository(UserSettingsRepository userSettingsRepository) {
+        this.userSettingsRepository = userSettingsRepository;
+    }
+
+    public void setAddDirectoryWindow(AddDirectoryWindow addDirectoryWindow) {
+        this.addDirectoryWindow = addDirectoryWindow;
+    }
+
+
     public void onSearchQueryChanged(String query) {
         List<String> results = finder.findLike(query);
         mainWindow.updateResultView(results);
@@ -51,7 +65,13 @@ public class EventMediator {
     }
 
     public void onSettingsMenuItemClicked() {
-        settingsWindow.start();
+        try {
+            userSettings = userSettingsRepository.load();
+            settingsWindow.setDirectories(userSettings.getDirectories());
+            settingsWindow.show();
+        } catch (IOException e) {
+            throw new RuntimeException("Failed to load settings file.", e);
+        }
     }
 
     public void onExitMenuItemClicked() {
@@ -79,4 +99,34 @@ public class EventMediator {
     public void onOpenFolderButtonPressed(String selectedItem) {
         onResultItemControlClick(selectedItem);
     }
+
+    public void onRemoveDirectories(List<Integer> indices) {
+        indices.forEach(index -> userSettings.getDirectories().remove(index.intValue()));
+        try {
+            userSettingsRepository.save(userSettings);
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+        settingsWindow.removeDirectories(indices);
+    }
+
+    public void onAddDirectoryButtonClicked() {
+        addDirectoryWindow.show();
+    }
+
+    public void onAddDirectoryOkButtonClicked(String directory) {
+        userSettings.getDirectories().add(directory);
+        try {
+            userSettingsRepository.save(userSettings);
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+        settingsWindow.setDirectories(userSettings.getDirectories());
+        addDirectoryWindow.hide();
+    }
+
+    public void onAddDirectoryCancelButtonClicked() {
+        addDirectoryWindow.hide();
+    }
+
 }

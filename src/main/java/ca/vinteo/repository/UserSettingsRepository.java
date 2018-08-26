@@ -1,5 +1,6 @@
 package ca.vinteo.repository;
 
+import ca.vinteo.ui.EventMediator;
 import com.google.common.io.Files;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
@@ -14,9 +15,10 @@ public class UserSettingsRepository extends FileRepository {
 
     private final Gson parser;
 
-    public UserSettingsRepository(Path fileLocation) {
+    public UserSettingsRepository(Path fileLocation, EventMediator eventMediator) {
         super(fileLocation);
         parser = new GsonBuilder().setPrettyPrinting().create();
+        eventMediator.setUserSettingsRepository(this);
     }
 
     public UserSettings load() throws IOException {

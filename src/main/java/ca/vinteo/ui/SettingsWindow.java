@@ -1,7 +1,5 @@
 package ca.vinteo.ui;
 
-import ca.vinteo.repository.UserSettings;
-import ca.vinteo.repository.UserSettingsRepository;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.geometry.Insets;
@@ -17,43 +15,30 @@ import javafx.stage.Modality;
 import javafx.stage.Stage;
 
 import java.io.IOException;
+import java.util.List;
 
 
 public class SettingsWindow {
 
     private final Stage stage;
+    private final ListView<String> directoryListView;
+    private ObservableList<String> directories;
 
-    public SettingsWindow(EventMediator eventMediator, UserSettingsRepository userSettingsRepo) throws IOException {
+    public SettingsWindow(EventMediator eventMediator) throws IOException {
         VBox rootPane = new VBox();
         rootPane.setPadding(new Insets(10, 10, 10, 10));
         rootPane.setSpacing(10);
 
-
         Label directoryLabel = new Label("Directories");
-        UserSettings userSettings = userSettingsRepo.load();
-        ObservableList<String> directories = FXCollections.observableArrayList(userSettings.getDirectories());
-        ListView<String> directoryListView = new ListView<>(directories);
+        directories = FXCollections.observableArrayList();
+        directoryListView = new ListView<>(directories);
         directoryListView.setOrientation(Orientation.VERTICAL);
 
         Button addButton = new Button("Add");
-        addButton.setOnAction(event -> {
-            System.out.println("Add button clicked");
-        });
+        addButton.setOnAction(event -> eventMediator.onAddDirectoryButtonClicked());
 
         Button removeButton = new Button("Remove");
-        removeButton.setOnAction(event -> {
-            System.out.println("Remove button clicked");
-            directoryListView.getSelectionModel().getSelectedIndices().forEach(index -> {
-                directoryListView.getItems().remove(index.intValue());
-                userSettings.getDirectories().remove(index.intValue());
-            });
-
-            try {
-                userSettingsRepo.save(userSettings);
-            } catch (IOException e) {
-                throw new RuntimeException(e);
-            }
-        });
+        removeButton.setOnAction(event -> eventMediator.onRemoveDirectories(directoryListView.getSelectionModel().getSelectedIndices()));
         removeButton.setDisable(true);
 
         directoryListView.getSelectionModel().selectedItemProperty().addListener((observable, oldValue, newValue) -> {
@@ -63,7 +48,6 @@ public class SettingsWindow {
                 removeButton.setDisable(false);
             }
         });
-
 
         GridPane buttonPane = new GridPane();
         buttonPane.setHgap(10);
@@ -81,7 +65,20 @@ public class SettingsWindow {
         eventMediator.setSettingsWindow(this);
     }
 
-    public void start() {
+    public void show() {
         stage.show();
+    }
+
+    public void hide() {
+        stage.close();
+    }
+
+    public void removeDirectories(List<Integer> indices) {
+        indices.forEach(index -> directoryListView.getItems().remove(index.intValue()));
+    }
+
+    public void setDirectories(List<String> directories) {
+        this.directories.clear();
+        this.directories.addAll(directories);
     }
 }
