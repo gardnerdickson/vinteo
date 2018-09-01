@@ -36,10 +36,14 @@ public final class Main extends Application {
     @Override
     public void start(Stage primaryStage) throws IOException, RepositoryException {
         Parameters commandLineArguments = getParameters();
-        if (commandLineArguments.getRaw().size() != 1) {
-            throw new IllegalArgumentException("Expected exactly 1 parameter. Got " + commandLineArguments.getRaw().size());
+        ApplicationConfiguration config;
+        if (commandLineArguments.getRaw().size() == 0) {
+            config = new ApplicationConfiguration();
+        } else if (commandLineArguments.getRaw().size() == 1) {
+            config = new ApplicationConfiguration(Paths.get(commandLineArguments.getRaw().get(0)));
+        } else {
+            throw new IllegalArgumentException("Expected 0 or 1 parameters. Got " + commandLineArguments.getRaw().size());
         }
-        ApplicationConfiguration config = new ApplicationConfiguration(Paths.get(commandLineArguments.getRaw().get(0)));
 
         // If the application has not been run before. Execute first time setup.
         if (Files.notExists(Paths.get(config.getSqliteFile()))) {
