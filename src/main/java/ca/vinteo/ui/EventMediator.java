@@ -1,8 +1,7 @@
 package ca.vinteo.ui;
 
 import ca.vinteo.Finder;
-import ca.vinteo.repository.UserSettings;
-import ca.vinteo.repository.UserSettingsRepository;
+import ca.vinteo.repository.*;
 import ca.vinteo.util.DesktopUtil;
 import ca.vinteo.util.VlcLauncher;
 import org.slf4j.Logger;
@@ -12,6 +11,8 @@ import java.io.IOException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 public class EventMediator {
 
@@ -25,6 +26,7 @@ public class EventMediator {
     private DesktopUtil desktopUtil;
     private UserSettingsRepository userSettingsRepository;
     private UserSettings userSettings;
+    private ItemRepository itemRepository;
 
     public void setMainWindow(MainWindow mainWindow) {
         this.mainWindow = mainWindow;
@@ -48,6 +50,10 @@ public class EventMediator {
 
     public void setUserSettingsRepository(UserSettingsRepository userSettingsRepository) {
         this.userSettingsRepository = userSettingsRepository;
+    }
+
+    public void setItemRepository(ItemRepository itemRepository) {
+        this.itemRepository = itemRepository;
     }
 
     public void setAddDirectoryWindow(AddDirectoryWindow addDirectoryWindow) {
@@ -127,6 +133,23 @@ public class EventMediator {
         launchItem(selectedItem);
     }
 
+    public void onMainWindowRescanButtonPressed() {
+        try {
+            logger.info("Clearing items.");
+            itemRepository.clearItems();
+            Map<String, String> results = finder.findAllFilePaths();
+            List<Item> items = results
+                    .entrySet()
+                    .stream()
+                    .map(entry -> new Item(null, entry.getValue(), entry.getKey()))
+                    .collect(Collectors.toList());
+            logger.info("Adding items.");
+            itemRepository.addItems(items);
+            logger.info("Done adding {} items", items.size());
+        } catch (IOException | RepositoryException e) {
+            throw new RuntimeException(e);
+        }
+    }
 
     private void launchItem(String item) {
         String filePathStr = finder.results().get(item);

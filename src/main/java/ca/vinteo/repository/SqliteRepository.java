@@ -1,10 +1,21 @@
 package ca.vinteo.repository;
 
+import java.sql.Connection;
+import java.sql.DriverManager;
+import java.sql.SQLException;
+
 public abstract class SqliteRepository {
 
-    protected String connectionString;
+    private static final String CONNECTION_PREFIX = "jdbc:sqlite:";
 
-    public SqliteRepository(String connectionString) {
-        this.connectionString = connectionString;
+    String connectionString;
+
+    public SqliteRepository(String sqliteFileLocation) {
+        this.connectionString = CONNECTION_PREFIX  + sqliteFileLocation;
     }
+
+    public Connection newConnection() throws SQLException {
+        return DriverManager.getConnection(connectionString);
+    }
+
 }

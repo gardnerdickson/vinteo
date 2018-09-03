@@ -97,6 +97,11 @@ public class MainWindow {
             eventMediator.onOpenFolderButtonPressed(resultView.getSelectionModel().getSelectedItem());
         });
 
+        Button rescanButton = new Button("Rescan");
+        rescanButton.setOnAction(event -> {
+            eventMediator.onMainWindowRescanButtonPressed();
+        });
+
         this.mainStage.setTitle("Vinteo");
 
         VBox rootPane = new VBox();
@@ -109,6 +114,7 @@ public class MainWindow {
         buttonPane.setAlignment(Pos.BASELINE_CENTER);
         buttonPane.add(playButton, 0, 0);
         buttonPane.add(openFolderButton, 1, 0);
+        buttonPane.add(rescanButton, 2, 0);
 
         rootPane.getChildren().addAll(menuBar, textField, resultView, buttonPane);
         VBox.setVgrow(resultView, Priority.ALWAYS);

@@ -1,10 +1,7 @@
 package ca.vinteo;
 
 
-import ca.vinteo.repository.InitializationRepository;
-import ca.vinteo.repository.RepositoryException;
-import ca.vinteo.repository.UserSettings;
-import ca.vinteo.repository.UserSettingsRepository;
+import ca.vinteo.repository.*;
 import ca.vinteo.ui.AddDirectoryWindow;
 import ca.vinteo.ui.EventMediator;
 import ca.vinteo.ui.MainWindow;
@@ -27,7 +24,6 @@ import java.util.stream.Collectors;
 public final class Main extends Application {
 
     private static final Logger logger = LoggerFactory.getLogger(Main.class);
-    private static final String CONNECTION_STRING_PREFIX = "jdbc:sqlite:";
 
     public static void main(String[] args) {
         launch(args);
@@ -48,7 +44,7 @@ public final class Main extends Application {
         // If the application has not been run before. Execute first time setup.
         if (Files.notExists(Paths.get(config.getSqliteFile()))) {
             logger.info("Performing first time setup...");
-            InitializationRepository initializationRepository = new InitializationRepository(CONNECTION_STRING_PREFIX + config.getSqliteFile());
+            InitializationRepository initializationRepository = new InitializationRepository(config.getSqliteFile());
             initializationRepository.executeSetup();
         }
 
@@ -62,6 +58,7 @@ public final class Main extends Application {
 
         new DesktopUtil(eventMediator);
         new VlcLauncher(config.getVlcCommand(), eventMediator);
+        new ItemRepository(config.getSqliteFile(), eventMediator);
 
         MainWindow mainWindow = new MainWindow(primaryStage, eventMediator, FXCollections.observableArrayList(finder.results().keySet()));
         mainWindow.setup();
