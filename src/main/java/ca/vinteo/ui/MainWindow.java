@@ -8,6 +8,7 @@ import javafx.geometry.Orientation;
 import javafx.geometry.Pos;
 import javafx.scene.Scene;
 import javafx.scene.control.*;
+import javafx.scene.input.KeyCode;
 import javafx.scene.input.MouseButton;
 import javafx.scene.layout.GridPane;
 import javafx.scene.layout.Priority;
@@ -50,9 +51,6 @@ public class MainWindow {
         fileMenu.getItems().addAll(settingsItem, separatorItem, exitItem);
         menuBar.getMenus().add(fileMenu);
 
-        TextField textField = new TextField();
-        textField.textProperty().addListener((observable, oldValue, newValue) -> eventMediator.onSearchQueryChanged(newValue));
-
         ListView<String> resultView = new ListView<>(resultItems);
         resultView.setOrientation(Orientation.VERTICAL);
         resultView.getSelectionModel().selectedItemProperty().addListener((observable, oldValue, newValue) -> {
@@ -65,6 +63,27 @@ public class MainWindow {
                 eventMediator.onResultItemDoubleClick(selectedItem.getText());
             } else if (event.isControlDown() && event.getButton() == MouseButton.PRIMARY) {
                 eventMediator.onResultItemControlClick(selectedItem.getText());
+            }
+        });
+
+        resultView.setOnKeyPressed((keyEvent) -> {
+            if (keyEvent.getCode() == KeyCode.ENTER) {
+                String selectedItem = resultView.getSelectionModel().getSelectedItem();
+                if (selectedItem != null) {
+                    eventMediator.onMainWindowEnterKeyPressed(selectedItem);
+                }
+            }
+        });
+
+        TextField textField = new TextField();
+        textField.textProperty().addListener((observable, oldValue, newValue) -> eventMediator.onSearchQueryChanged(newValue));
+        textField.setOnKeyPressed((keyEvent) -> {
+            if (keyEvent.getCode() == KeyCode.DOWN) {
+                SelectionModel<String> selectionModel = resultView.getSelectionModel();
+                if (selectionModel.getSelectedItem() == null) {
+                    selectionModel.select(0);
+                }
+                resultView.requestFocus();
             }
         });
 
@@ -94,7 +113,8 @@ public class MainWindow {
         rootPane.getChildren().addAll(menuBar, textField, resultView, buttonPane);
         VBox.setVgrow(resultView, Priority.ALWAYS);
 
-        this.mainStage.setScene(new Scene(rootPane, 500, 700));
+        Scene scene = new Scene(rootPane, 500, 700);
+        this.mainStage.setScene(scene);
     }
 
     public void updateResultView(List<String> items) {

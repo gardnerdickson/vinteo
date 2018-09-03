@@ -79,13 +79,7 @@ public class EventMediator {
     }
 
     public void onResultItemDoubleClick(String selectedItem) {
-        String filePathStr = finder.results().get(selectedItem);
-        Path filePath = Paths.get(filePathStr);
-        try {
-            vlcLauncher.launch(filePath);
-        } catch (IOException e) {
-            throw new RuntimeException("Failed to play '" + filePath.toString() + "'", e);
-        }
+        launchItem(selectedItem);
     }
 
     public void onResultItemControlClick(String selectedItem) {
@@ -129,4 +123,18 @@ public class EventMediator {
         addDirectoryWindow.hide();
     }
 
+    public void onMainWindowEnterKeyPressed(String selectedItem) {
+        launchItem(selectedItem);
+    }
+
+
+    private void launchItem(String item) {
+        String filePathStr = finder.results().get(item);
+        Path filePath = Paths.get(filePathStr);
+        try {
+            vlcLauncher.launch(filePath);
+        } catch (IOException e) {
+            throw new RuntimeException("Failed to play '" + filePath.toString() + "'", e);
+        }
+    }
 }
