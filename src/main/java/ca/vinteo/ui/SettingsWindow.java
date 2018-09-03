@@ -14,7 +14,6 @@ import javafx.scene.layout.VBox;
 import javafx.stage.Modality;
 import javafx.stage.Stage;
 
-import java.io.IOException;
 import java.util.List;
 
 
@@ -24,7 +23,7 @@ public class SettingsWindow {
     private final ListView<String> directoryListView;
     private ObservableList<String> directories;
 
-    public SettingsWindow(EventMediator eventMediator) throws IOException {
+    public SettingsWindow(EventMediator eventMediator) {
         VBox rootPane = new VBox();
         rootPane.setPadding(new Insets(10, 10, 10, 10));
         rootPane.setSpacing(10);
@@ -35,10 +34,10 @@ public class SettingsWindow {
         directoryListView.setOrientation(Orientation.VERTICAL);
 
         Button addButton = new Button("Add");
-        addButton.setOnAction(event -> eventMediator.onAddDirectoryButtonClicked());
+        addButton.setOnAction(event -> eventMediator.onSettingsWindowAddDirectoryButtonClicked());
 
         Button removeButton = new Button("Remove");
-        removeButton.setOnAction(event -> eventMediator.onRemoveDirectories(directoryListView.getSelectionModel().getSelectedIndices()));
+        removeButton.setOnAction(event -> eventMediator.onSettingsWindowRemoveDirectories(directoryListView.getSelectionModel().getSelectedIndices()));
         removeButton.setDisable(true);
 
         directoryListView.getSelectionModel().selectedItemProperty().addListener((observable, oldValue, newValue) -> {

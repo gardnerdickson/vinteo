@@ -18,6 +18,8 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -41,26 +43,35 @@ public final class Main extends Application {
             throw new IllegalArgumentException("Expected 0 or 1 parameters. Got " + commandLineArguments.getRaw().size());
         }
 
-        // If the application has not been run before. Execute first time setup.
-        if (Files.notExists(Paths.get(config.getSqliteFile()))) {
-            logger.info("Performing first time setup...");
-            InitializationRepository initializationRepository = new InitializationRepository(config.getSqliteFile());
-            initializationRepository.executeSetup();
-        }
-
         EventMediator eventMediator = new EventMediator();
 
         UserSettingsRepository userSettingsRepo = new UserSettingsRepository(Paths.get(config.getUserSettingsFile()), eventMediator);
         UserSettings userSettings = userSettingsRepo.load();
 
         Set<Path> directoryPaths = userSettings.getDirectories().stream().map(dir -> Paths.get(dir)).collect(Collectors.toSet());
-        Finder finder = new Finder(directoryPaths, userSettings.getFileExtensions(), eventMediator);
+        FileScanner fileScanner = new FileScanner(directoryPaths, userSettings.getFileExtensions(), eventMediator);
+
+        // If there is not database file, create it.
+        if (Files.notExists(Paths.get(config.getSqliteFile()))) {
+            logger.info("Performing first time setup...");
+            InitializationRepository initializationRepository = new InitializationRepository(config.getSqliteFile());
+            initializationRepository.executeSetup();
+        }
+
+        ItemRepository itemRepository = new ItemRepository(config.getSqliteFile(), eventMediator);
+        List<Item> items = itemRepository.findAllItems();
+
+        // If there are no items in the database, scan for items
+        if (items.isEmpty()) {
+            Map<String, String> filePaths = fileScanner.findAllFilePaths();
+            items = filePaths.entrySet().stream().map(entry -> new Item(null, entry.getValue(), entry.getKey())).collect(Collectors.toList());
+            itemRepository.addItems(items);
+        }
 
         new DesktopUtil(eventMediator);
         new VlcLauncher(config.getVlcCommand(), eventMediator);
-        new ItemRepository(config.getSqliteFile(), eventMediator);
-
-        MainWindow mainWindow = new MainWindow(primaryStage, eventMediator, FXCollections.observableArrayList(finder.results().keySet()));
+        List<String> resultItems = items.stream().map(Item::getName).collect(Collectors.toList());
+        MainWindow mainWindow = new MainWindow(primaryStage, eventMediator, FXCollections.observableArrayList(resultItems));
         mainWindow.setup();
 
         new SettingsWindow(eventMediator);

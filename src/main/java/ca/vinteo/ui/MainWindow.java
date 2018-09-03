@@ -89,12 +89,16 @@ public class MainWindow {
 
         Button playButton = new Button("Play with VLC");
         playButton.setOnAction(event ->  {
-            eventMediator.onPlayButtonPressed(resultView.getSelectionModel().getSelectedItem());
+            if (resultView.getSelectionModel().getSelectedItem() != null) {
+                eventMediator.onMainWindowPlayButtonPressed(resultView.getSelectionModel().getSelectedItem());
+            }
         });
 
         Button openFolderButton = new Button("Open folder");
         openFolderButton.setOnAction(event -> {
-            eventMediator.onOpenFolderButtonPressed(resultView.getSelectionModel().getSelectedItem());
+            if (resultView.getSelectionModel().getSelectedItem() != null) {
+                eventMediator.onMainWindowOpenFolderButtonPressed(resultView.getSelectionModel().getSelectedItem());
+            }
         });
 
         Button rescanButton = new Button("Rescan");

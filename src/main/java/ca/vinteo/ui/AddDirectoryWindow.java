@@ -25,8 +25,8 @@ public class AddDirectoryWindow {
         Button okButton = new Button("Ok");
         Button cancelButton = new Button("Cancel");
 
-        okButton.setOnAction(event -> eventMediator.onAddDirectoryOkButtonClicked(directoryText.getText()));
-        cancelButton.setOnAction(event -> eventMediator.onAddDirectoryCancelButtonClicked());
+        okButton.setOnAction(event -> eventMediator.onDirectoryDialogOkButtonClicked(directoryText.getText()));
+        cancelButton.setOnAction(event -> eventMediator.onDirectoryDialogCancelButtonClicked());
 
         GridPane buttonPane = new GridPane();
         buttonPane.setHgap(10);

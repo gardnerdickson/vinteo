@@ -8,6 +8,7 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.List;
+import java.util.Optional;
 
 public class ItemRepository extends SqliteRepository {
 
@@ -15,8 +16,9 @@ public class ItemRepository extends SqliteRepository {
     private static final String FIND_ALL = "SELECT * FROM item";
     private static final String FIND_WHERE_NAME_LIKE = "SELECT * FROM item WHERE lower(name) like ?";
     private static final String TRUNCATE = "DELETE FROM item";
+    private static final String FIND_BY_NAME = "SELECT * FROM item WHERE name = ?";
 
-    public ItemRepository(String connectionString, EventMediator eventMediator) {
+    public ItemRepository(String connectionString, EventMediator eventMediator) throws RepositoryException {
         super(connectionString);
         eventMediator.setItemRepository(this);
     }
@@ -63,6 +65,17 @@ public class ItemRepository extends SqliteRepository {
             return Item.createListFromResultSet(resultSet);
         } catch (SQLException e) {
             throw new RepositoryException("Failed to retrieve items", e);
+        }
+    }
+
+    public Optional<Item> findByName(String name) throws RepositoryException {
+        try (PreparedStatement statement = newConnection().prepareStatement(FIND_BY_NAME)) {
+            statement.setString(1, name);
+            ResultSet resultSet = statement.executeQuery();
+            List<Item> items = Item.createListFromResultSet(resultSet);
+            return items.isEmpty() ? Optional.empty() : Optional.of(items.get(0));
+        } catch (SQLException e) {
+            throw new RepositoryException("Failed to find item with name: " + name);
         }
     }
 

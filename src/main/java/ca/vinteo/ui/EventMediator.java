@@ -1,6 +1,6 @@
 package ca.vinteo.ui;
 
-import ca.vinteo.Finder;
+import ca.vinteo.FileScanner;
 import ca.vinteo.repository.*;
 import ca.vinteo.util.DesktopUtil;
 import ca.vinteo.util.VlcLauncher;
@@ -10,6 +10,7 @@ import org.slf4j.LoggerFactory;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -21,7 +22,7 @@ public class EventMediator {
     private MainWindow mainWindow;
     private SettingsWindow settingsWindow;
     private AddDirectoryWindow addDirectoryWindow;
-    private Finder finder;
+    private FileScanner fileScanner;
     private VlcLauncher vlcLauncher;
     private DesktopUtil desktopUtil;
     private UserSettingsRepository userSettingsRepository;
@@ -32,12 +33,12 @@ public class EventMediator {
         this.mainWindow = mainWindow;
     }
 
-    public void setSettingsWindow(SettingsWindow settingsWindow) throws IOException {
+    public void setSettingsWindow(SettingsWindow settingsWindow) {
         this.settingsWindow = settingsWindow;
     }
 
-    public void setFinder(Finder finder) {
-        this.finder = finder;
+    public void setFileScanner(FileScanner fileScanner) {
+        this.fileScanner = fileScanner;
     }
 
     public void setVlcLauncher(VlcLauncher vlcLauncher) {
@@ -52,7 +53,7 @@ public class EventMediator {
         this.userSettingsRepository = userSettingsRepository;
     }
 
-    public void setItemRepository(ItemRepository itemRepository) {
+    public void setItemRepository(ItemRepository itemRepository) throws RepositoryException {
         this.itemRepository = itemRepository;
     }
 
@@ -60,14 +61,17 @@ public class EventMediator {
         this.addDirectoryWindow = addDirectoryWindow;
     }
 
-
     public void onSearchQueryChanged(String query) {
-        List<String> results = finder.findLike(query);
-        mainWindow.updateResultView(results);
+        try {
+            List<Item> items = itemRepository.findLike(query);
+            List<String> itemNames = items.stream().map(Item::getName).collect(Collectors.toList());
+            mainWindow.updateResultView(new ArrayList<>(itemNames));
+        } catch (RepositoryException e) {
+            throw new RuntimeException(e);
+        }
     }
 
     public void onResultItemSelectionChanged() {
-        logger.debug("Selected item changed");
     }
 
     public void onSettingsMenuItemClicked() {
@@ -89,18 +93,23 @@ public class EventMediator {
     }
 
     public void onResultItemControlClick(String selectedItem) {
-        desktopUtil.openFolder(Paths.get(finder.results().get(selectedItem)));
+        try {
+            Item item = itemRepository.findByName(selectedItem).orElseThrow(() -> new RuntimeException("Item not found: " + selectedItem));
+            desktopUtil.openFolder(Paths.get(item.getPath()));
+        } catch (RepositoryException e) {
+            throw new RuntimeException(e);
+        }
     }
 
-    public void onPlayButtonPressed(String selectedItem) {
+    public void onMainWindowPlayButtonPressed(String selectedItem) {
         onResultItemDoubleClick(selectedItem);
     }
 
-    public void onOpenFolderButtonPressed(String selectedItem) {
+    public void onMainWindowOpenFolderButtonPressed(String selectedItem) {
         onResultItemControlClick(selectedItem);
     }
 
-    public void onRemoveDirectories(List<Integer> indices) {
+    public void onSettingsWindowRemoveDirectories(List<Integer> indices) {
         indices.forEach(index -> userSettings.getDirectories().remove(index.intValue()));
         try {
             userSettingsRepository.save(userSettings);
@@ -110,11 +119,11 @@ public class EventMediator {
         settingsWindow.removeDirectories(indices);
     }
 
-    public void onAddDirectoryButtonClicked() {
+    public void onSettingsWindowAddDirectoryButtonClicked() {
         addDirectoryWindow.show();
     }
 
-    public void onAddDirectoryOkButtonClicked(String directory) {
+    public void onDirectoryDialogOkButtonClicked(String directory) {
         userSettings.getDirectories().add(directory);
         try {
             userSettingsRepository.save(userSettings);
@@ -125,7 +134,7 @@ public class EventMediator {
         addDirectoryWindow.hide();
     }
 
-    public void onAddDirectoryCancelButtonClicked() {
+    public void onDirectoryDialogCancelButtonClicked() {
         addDirectoryWindow.hide();
     }
 
@@ -137,7 +146,7 @@ public class EventMediator {
         try {
             logger.info("Clearing items.");
             itemRepository.clearItems();
-            Map<String, String> results = finder.findAllFilePaths();
+            Map<String, String> results = fileScanner.findAllFilePaths();
             List<Item> items = results
                     .entrySet()
                     .stream()
@@ -151,13 +160,14 @@ public class EventMediator {
         }
     }
 
-    private void launchItem(String item) {
-        String filePathStr = finder.results().get(item);
-        Path filePath = Paths.get(filePathStr);
+    private void launchItem(String itemName) {
         try {
+            Item item = itemRepository.findByName(itemName).orElseThrow(() -> new RuntimeException("Item not found: " + itemName));
+            String filePathStr = item.getPath();
+            Path filePath = Paths.get(filePathStr);
             vlcLauncher.launch(filePath);
-        } catch (IOException e) {
-            throw new RuntimeException("Failed to play '" + filePath.toString() + "'", e);
+        } catch (IOException | RepositoryException e) {
+            throw new RuntimeException("Failed to play file.", e);
         }
     }
 }
