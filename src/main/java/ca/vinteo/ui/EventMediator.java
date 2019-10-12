@@ -63,7 +63,7 @@ public class EventMediator {
 
     public void onSearchQueryChanged(String query) {
         try {
-            List<Item> items = itemRepository.findLike(query);
+            List<Item> items = itemRepository.findUsingKeywords(query);
             List<String> itemNames = items.stream().map(Item::getName).collect(Collectors.toList());
             mainWindow.updateResultView(new ArrayList<>(itemNames));
         } catch (RepositoryException e) {

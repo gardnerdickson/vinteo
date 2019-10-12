@@ -2,19 +2,23 @@ package ca.vinteo.repository;
 
 import ca.vinteo.ui.EventMediator;
 import com.google.common.collect.ImmutableList;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
 
 public class ItemRepository extends SqliteRepository {
 
+    private static final Logger logger = LoggerFactory.getLogger(ItemRepository.class);
+
     private static final String INSERT = "INSERT INTO item (path, name) values (?, ?)";
     private static final String FIND_ALL = "SELECT * FROM item";
-    private static final String FIND_WHERE_NAME_LIKE = "SELECT * FROM item WHERE lower(name) like ?";
     private static final String TRUNCATE = "DELETE FROM item";
     private static final String FIND_BY_NAME = "SELECT * FROM item WHERE name = ?";
 
@@ -58,9 +62,15 @@ public class ItemRepository extends SqliteRepository {
         }
     }
 
-    public ImmutableList<Item> findLike(String query) throws RepositoryException {
-        try (PreparedStatement statement = newConnection().prepareStatement(FIND_WHERE_NAME_LIKE)) {
-            statement.setString(1, "%" + query + "%");
+    public ImmutableList<Item> findUsingKeywords(String query) throws RepositoryException {
+        StringBuilder builder = new StringBuilder(FIND_ALL).append(" WHERE 1 = 1");
+        Arrays.stream(query.toLowerCase().split("[.\\s]+")).forEach(word -> {
+            builder.append(" AND lower(name) like '%")
+                    .append(word)
+                    .append("%'");
+        });
+        String queryString = builder.toString();
+        try (PreparedStatement statement = newConnection().prepareStatement(queryString)) {
             ResultSet resultSet = statement.executeQuery();
             return Item.createListFromResultSet(resultSet);
         } catch (SQLException e) {
