@@ -28,7 +28,11 @@ public final class Main extends Application {
     private static final Logger logger = LoggerFactory.getLogger(Main.class);
 
     public static void main(String[] args) {
-        launch(args);
+        try {
+            launch(args);
+        } catch (Exception e) {
+            logger.error("Caught unhandled exception.", e);
+        }
     }
 
     @Override
