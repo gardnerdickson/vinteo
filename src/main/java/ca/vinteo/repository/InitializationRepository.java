@@ -1,6 +1,9 @@
 package ca.vinteo.repository;
 
+import java.io.BufferedReader;
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.net.URISyntaxException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
@@ -10,20 +13,27 @@ import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.SQLException;
 import java.util.Scanner;
+import java.util.stream.Collectors;
 
 public class InitializationRepository extends SqliteRepository {
 
-    private static final String SETUP_SCRIPT_RESOURCE = "setup.sql";
+    private static final String SETUP_SCRIPT_RESOURCE = "/setup.sql";
+    private static final String COMMENT_REGEX = "--(.)*";
 
     public InitializationRepository(String connectionString) {
         super(connectionString);
     }
 
     public void executeSetup() throws RepositoryException {
-        String commentRegex = "--(.)*";
+        String setupScriptContents;
+        InputStream stream = getClass().getResourceAsStream(SETUP_SCRIPT_RESOURCE);
+        try (BufferedReader reader = new BufferedReader(new InputStreamReader(stream))) {
+            setupScriptContents = reader.lines().collect(Collectors.joining("\n"));
+        } catch (IOException e) {
+            throw new RepositoryException("Failed to read setup script.", e);
+        }
         try (Connection connection = DriverManager.getConnection(connectionString)) {
-            Path setupScript = Paths.get(ClassLoader.getSystemResource(SETUP_SCRIPT_RESOURCE).toURI());
-            String setupScriptContentsWithCommentsRemoved = new String(Files.readAllBytes(setupScript), StandardCharsets.UTF_8).replaceAll(commentRegex, "");
+            String setupScriptContentsWithCommentsRemoved = setupScriptContents.replaceAll(COMMENT_REGEX, "");
             Scanner statementScanner = new Scanner(setupScriptContentsWithCommentsRemoved).useDelimiter(";");
             while (statementScanner.hasNext()) {
                 String statement = statementScanner.next().trim();
@@ -31,8 +41,8 @@ public class InitializationRepository extends SqliteRepository {
                     connection.createStatement().execute(statement);
                 }
             }
-        } catch (URISyntaxException | IOException | SQLException e) {
-            throw new RepositoryException(e);
+        } catch (SQLException e) {
+            throw new RepositoryException("Failed to execute setup script.", e);
         }
     }
 
