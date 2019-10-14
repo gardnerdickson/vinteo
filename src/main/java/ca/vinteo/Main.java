@@ -67,7 +67,7 @@ public final class Main extends Application {
 
         // If there are no items in the database, scan for items
         if (items.isEmpty()) {
-            Map<String, String> filePaths = fileScanner.findAllFilePaths();
+            Map<String, String> filePaths = fileScanner.findAllFilePaths((num) -> null);
             items = filePaths.entrySet().stream().map(entry -> new Item(null, entry.getValue(), entry.getKey())).collect(Collectors.toList());
             itemRepository.addItems(items);
         }

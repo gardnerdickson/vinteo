@@ -11,6 +11,7 @@ import javafx.scene.control.*;
 import javafx.scene.input.KeyCode;
 import javafx.scene.input.MouseButton;
 import javafx.scene.layout.GridPane;
+import javafx.scene.layout.HBox;
 import javafx.scene.layout.Priority;
 import javafx.scene.layout.VBox;
 import javafx.stage.Stage;
@@ -19,6 +20,7 @@ import org.slf4j.LoggerFactory;
 
 import java.util.Collection;
 import java.util.List;
+import java.util.concurrent.LinkedBlockingQueue;
 
 public class MainWindow {
 
@@ -28,11 +30,13 @@ public class MainWindow {
     private final EventMediator eventMediator;
 
     private final ObservableList<String> resultItems;
+    private final Label statusText;
 
     public MainWindow(Stage mainStage, EventMediator eventMediator, Collection<String> items) {
         this.mainStage = mainStage;
         this.eventMediator = eventMediator;
         this.resultItems = FXCollections.observableArrayList(items);
+        this.statusText = new Label();
 
         eventMediator.setMainWindow(this);
     }
@@ -106,6 +110,9 @@ public class MainWindow {
             eventMediator.onMainWindowRescanButtonPressed();
         });
 
+        HBox statusBar = new HBox();
+        statusBar.getChildren().addAll(statusText);
+
         this.mainStage.setTitle("Vinteo");
 
         VBox rootPane = new VBox();
@@ -120,7 +127,7 @@ public class MainWindow {
         buttonPane.add(openFolderButton, 1, 0);
         buttonPane.add(rescanButton, 2, 0);
 
-        rootPane.getChildren().addAll(menuBar, textField, resultView, buttonPane);
+        rootPane.getChildren().addAll(menuBar, textField, resultView, buttonPane, statusBar);
         VBox.setVgrow(resultView, Priority.ALWAYS);
 
         Scene scene = new Scene(rootPane, 500, 700);
@@ -130,6 +137,10 @@ public class MainWindow {
     public void updateResultView(List<String> items) {
         resultItems.clear();
         resultItems.addAll(items);
+    }
+
+    public void setStatusBarLabel(String text) {
+        statusText.setText(text);
     }
 
     public void close() {

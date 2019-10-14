@@ -4,6 +4,7 @@ import ca.vinteo.FileScanner;
 import ca.vinteo.repository.*;
 import ca.vinteo.util.DesktopUtil;
 import ca.vinteo.util.VlcLauncher;
+import javafx.concurrent.Task;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -13,6 +14,8 @@ import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 
 public class EventMediator {
@@ -143,21 +146,34 @@ public class EventMediator {
     }
 
     public void onMainWindowRescanButtonPressed() {
-        try {
-            logger.info("Clearing items.");
-            itemRepository.clearItems();
-            Map<String, String> results = fileScanner.findAllFilePaths();
-            List<Item> items = results
-                    .entrySet()
-                    .stream()
-                    .map(entry -> new Item(null, entry.getValue(), entry.getKey()))
-                    .collect(Collectors.toList());
-            logger.info("Adding items.");
-            itemRepository.addItems(items);
-            logger.info("Done adding {} items", items.size());
-        } catch (IOException | RepositoryException e) {
-            throw new RuntimeException(e);
-        }
+        Task<Void> rescanTask = new Task<Void>() {
+            @Override
+            protected Void call() throws Exception {
+                logger.info("Clearing items.");
+                final AtomicInteger count = new AtomicInteger(0);
+                Map<String, String> results = fileScanner.findAllFilePaths((path) -> {
+                    count.getAndIncrement();
+                    updateMessage("Items scanned: " + count.get());
+                    return null;
+                });
+                List<Item> items = results
+                        .entrySet()
+                        .stream()
+                        .map(entry -> new Item(null, entry.getValue(), entry.getKey()))
+                        .collect(Collectors.toList());
+                logger.info("Adding items.");
+                updateMessage("Updating database...");
+                itemRepository.clearItems();
+                itemRepository.addItems(items);
+                logger.info("Done adding {} items", items.size());
+                updateMessage("");
+                return null;
+            }
+        };
+        rescanTask.messageProperty().addListener((obs, oldMessage, newMessage) ->  {
+            mainWindow.setStatusBarLabel(newMessage);
+        });
+        new Thread(rescanTask).start();
     }
 
     private void launchItem(String itemName) {
