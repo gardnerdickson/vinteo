@@ -22,8 +22,8 @@ public class ItemRepository extends SqliteRepository {
     private static final String TRUNCATE = "DELETE FROM item";
     private static final String FIND_BY_NAME = "SELECT * FROM item WHERE name = ?";
 
-    public ItemRepository(String connectionString, EventMediator eventMediator) throws RepositoryException {
-        super(connectionString);
+    public ItemRepository(String sqliteFileLocation, EventMediator eventMediator) throws RepositoryException {
+        super(sqliteFileLocation);
         eventMediator.setItemRepository(this);
     }
 

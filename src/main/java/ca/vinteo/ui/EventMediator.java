@@ -8,12 +8,14 @@ import javafx.concurrent.Task;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.File;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
@@ -31,6 +33,7 @@ public class EventMediator {
     private UserSettingsRepository userSettingsRepository;
     private UserSettings userSettings;
     private ItemRepository itemRepository;
+    private PlayHistoryRepository playHistoryRepository;
 
     public void setMainWindow(MainWindow mainWindow) {
         this.mainWindow = mainWindow;
@@ -56,8 +59,12 @@ public class EventMediator {
         this.userSettingsRepository = userSettingsRepository;
     }
 
-    public void setItemRepository(ItemRepository itemRepository) throws RepositoryException {
+    public void setItemRepository(ItemRepository itemRepository) {
         this.itemRepository = itemRepository;
+    }
+
+    public void setPlayHistoryRepository(PlayHistoryRepository playHistoryRepository) {
+        this.playHistoryRepository = playHistoryRepository;
     }
 
     public void setAddDirectoryWindow(AddDirectoryWindow addDirectoryWindow) {
@@ -74,7 +81,19 @@ public class EventMediator {
         }
     }
 
-    public void onResultItemSelectionChanged() {
+    public void onResultItemSelectionChanged(String selectedItem) {
+        if (selectedItem == null) {
+            return;
+        }
+        try {
+            Item item = itemRepository.findByName(selectedItem).orElseThrow(() -> new RuntimeException("Item not found: " + selectedItem));
+            File file = new File(item.getPath());
+            String directory = file.getParent();
+            Optional<PlayHistoryItem> historyItem = playHistoryRepository.getMostRecentlyPlayedFileFromDirectory(directory);
+            historyItem.ifPresent(playHistoryItem -> mainWindow.setStatusBarLabel("Most recently played file from same directory: " + playHistoryItem.getName()));
+        } catch (RepositoryException e) {
+            throw new RuntimeException("Failed to retrieve most recently played file.", e);
+        }
     }
 
     public void onSettingsMenuItemClicked() {
@@ -105,7 +124,7 @@ public class EventMediator {
     }
 
     public void onMainWindowPlayButtonPressed(String selectedItem) {
-        onResultItemDoubleClick(selectedItem);
+        launchItem(selectedItem);
     }
 
     public void onMainWindowOpenFolderButtonPressed(String selectedItem) {
@@ -182,8 +201,19 @@ public class EventMediator {
             String filePathStr = item.getPath();
             Path filePath = Paths.get(filePathStr);
             vlcLauncher.launch(filePath);
+            logItemToPlayHistory(item);
         } catch (IOException | RepositoryException e) {
             throw new RuntimeException("Failed to play file.", e);
         }
     }
+
+    private void logItemToPlayHistory(Item item) {
+        logger.info("Logging '{}' to play history.", item.getPath());
+        try {
+            playHistoryRepository.logItem(item);
+        } catch (RepositoryException e) {
+            throw new RuntimeException("Failed to log file to play history.", e);
+        }
+    }
+
 }

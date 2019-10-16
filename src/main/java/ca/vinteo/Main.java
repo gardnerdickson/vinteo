@@ -20,6 +20,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -64,6 +65,7 @@ public final class Main extends Application {
 
         ItemRepository itemRepository = new ItemRepository(config.getSqliteFile(), eventMediator);
         List<Item> items = itemRepository.findAllItems();
+        new PlayHistoryRepository(config.getSqliteFile(), eventMediator);
 
         // If there are no items in the database, scan for items
         if (items.isEmpty()) {

@@ -58,7 +58,7 @@ public class MainWindow {
         ListView<String> resultView = new ListView<>(resultItems);
         resultView.setOrientation(Orientation.VERTICAL);
         resultView.getSelectionModel().selectedItemProperty().addListener((observable, oldValue, newValue) -> {
-            eventMediator.onResultItemSelectionChanged();
+            eventMediator.onResultItemSelectionChanged(newValue);
         });
 
         resultView.setOnMouseClicked((event) -> {

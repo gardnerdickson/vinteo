@@ -44,7 +44,6 @@ public class FileScanner {
                 }
                 if (Files.isRegularFile(path) && extensions.contains(com.google.common.io.Files.getFileExtension(path.getFileName().toString()))) {
                     fileItems.put(path.getFileName().toString(), path.toString());
-                    System.out.println(path.getFileName());
                     callback.apply(path);
                 }
             }
