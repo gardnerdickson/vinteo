@@ -76,6 +76,7 @@ public class EventMediator {
             List<Item> items = itemRepository.findUsingKeywords(query);
             List<String> itemNames = items.stream().map(Item::getName).collect(Collectors.toList());
             mainWindow.updateResultView(new ArrayList<>(itemNames));
+            mainWindow.setStatusBarLabel("");
         } catch (RepositoryException e) {
             throw new RuntimeException(e);
         }
@@ -90,7 +91,11 @@ public class EventMediator {
             File file = new File(item.getPath());
             String directory = file.getParent();
             Optional<PlayHistoryItem> historyItem = playHistoryRepository.getMostRecentlyPlayedFileFromDirectory(directory);
-            historyItem.ifPresent(playHistoryItem -> mainWindow.setStatusBarLabel("Most recently played file from same directory: " + playHistoryItem.getName()));
+            if (historyItem.isPresent()) {
+                mainWindow.setStatusBarLabel("Most recently played file from same directory: " + historyItem.get().getName());
+            } else {
+                mainWindow.setStatusBarLabel("");
+            }
         } catch (RepositoryException e) {
             throw new RuntimeException("Failed to retrieve most recently played file.", e);
         }
@@ -181,7 +186,7 @@ public class EventMediator {
                         .map(entry -> new Item(null, entry.getValue(), entry.getKey()))
                         .collect(Collectors.toList());
                 logger.info("Adding items.");
-                updateMessage("Updating database...");
+                updateMessage("Adding " + items.size() + " items to database...");
                 itemRepository.clearItems();
                 itemRepository.addItems(items);
                 logger.info("Done adding {} items", items.size());
