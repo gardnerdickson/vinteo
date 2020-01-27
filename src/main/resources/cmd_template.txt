@@ -1,0 +1,2 @@
+start "" "{VLC}" --fullscreen --sub-track 999 "{FILENAME}"
+exit

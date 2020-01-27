@@ -19,11 +19,13 @@ public final class ApplicationConfiguration {
     private static final String VLC_COMMAND_PROPERTY = "command.vlc";
     private static final String USER_SETTINGS_PROPERTY = "usersettings.file";
     private static final String SQL_FILE_PROPERTY = "sqlite.file";
+    private static final String TEMP_DIRECTORY_PROPERTY = "temp.dir";
     private static final String DEFAULT_CONFIG_FILE_NAME = "config.properties";
 
     private final String vlcCommand;
     private final String userSettingsFile;
     private final String sqliteFile;
+    private final String tempDirectory;
 
     ApplicationConfiguration() throws IOException {
         this(null);
@@ -57,8 +59,14 @@ public final class ApplicationConfiguration {
 
         {
             logger.debug("Looking up property: {}", SQL_FILE_PROPERTY);
-            Optional<String> property = Optional.ofNullable(properties.getProperty("sqlite.file"));
+            Optional<String> property = Optional.ofNullable(properties.getProperty(SQL_FILE_PROPERTY));
             sqliteFile = property.orElseThrow(() -> new NoSuchElementException("'" + SQL_FILE_PROPERTY + "' property not found."));
+        }
+
+        {
+            logger.debug("Looking up property: {}", TEMP_DIRECTORY_PROPERTY);
+            Optional<String> property = Optional.ofNullable(properties.getProperty(TEMP_DIRECTORY_PROPERTY));
+            tempDirectory = property.orElseThrow(() -> new NoSuchElementException("'" + TEMP_DIRECTORY_PROPERTY + "' property not found."));
         }
 
     }
@@ -75,4 +83,7 @@ public final class ApplicationConfiguration {
         return sqliteFile;
     }
 
+    public String getTempDirectory() {
+        return tempDirectory;
+    }
 }

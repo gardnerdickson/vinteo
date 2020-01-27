@@ -75,7 +75,7 @@ public final class Main extends Application {
         }
 
         new DesktopUtil(eventMediator);
-        new VlcLauncher(config.getVlcCommand(), eventMediator);
+        new VlcLauncher(config.getVlcCommand(), config.getTempDirectory(), eventMediator);
         List<String> resultItems = items.stream().map(Item::getName).collect(Collectors.toList());
         MainWindow mainWindow = new MainWindow(primaryStage, eventMediator, FXCollections.observableArrayList(resultItems));
         mainWindow.setup();
