@@ -20,7 +20,6 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -56,12 +55,10 @@ public final class Main extends Application {
         Set<Path> directoryPaths = userSettings.getDirectories().stream().map(dir -> Paths.get(dir)).collect(Collectors.toSet());
         FileScanner fileScanner = new FileScanner(directoryPaths, userSettings.getFileExtensions(), eventMediator);
 
-        // If there is not database file, create it.
-        if (Files.notExists(Paths.get(config.getSqliteFile()))) {
-            logger.info("Performing first time setup...");
-            InitializationRepository initializationRepository = new InitializationRepository(config.getSqliteFile());
-            initializationRepository.executeSetup();
-        }
+        // If there is no database file, this is the first time the application has been run
+        boolean firstTimeSetup = Files.notExists(Paths.get(config.getSqliteFile()));
+        DatabaseChangelogRepository changelogRepository = new DatabaseChangelogRepository(config.getSqliteFile());
+        changelogRepository.checkAndExecuteUpdates(firstTimeSetup);
 
         ItemRepository itemRepository = new ItemRepository(config.getSqliteFile(), eventMediator);
         List<Item> items = itemRepository.findAllItems();

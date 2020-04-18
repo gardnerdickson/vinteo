@@ -1,4 +1,3 @@
--- Create table schemas for first time setup.
 
 drop table if exists play_history;
 create table play_history (
