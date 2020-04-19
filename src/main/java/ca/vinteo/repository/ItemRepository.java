@@ -9,6 +9,8 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
@@ -17,7 +19,7 @@ public class ItemRepository extends SqliteRepository {
 
     private static final Logger logger = LoggerFactory.getLogger(ItemRepository.class);
 
-    private static final String INSERT = "INSERT INTO item (path, name) values (?, ?)";
+    private static final String INSERT = "INSERT INTO item (path, name, date_time_added) values (?, ?, ?)";
     private static final String FIND_ALL = "SELECT * FROM item";
     private static final String TRUNCATE = "DELETE FROM item";
     private static final String FIND_BY_NAME = "SELECT * FROM item WHERE name = ?";
@@ -36,11 +38,13 @@ public class ItemRepository extends SqliteRepository {
     }
 
     public void addItems(List<Item> items) throws RepositoryException {
+        final String now = LocalDateTime.now().format(DateTimeFormatter.ISO_LOCAL_DATE_TIME);
         try (PreparedStatement statement = newConnection().prepareStatement(INSERT)) {
             int batchSize = 0;
             for (Item item : items) {
                 statement.setString(1, item.getPath());
                 statement.setString(2, item.getName());
+                statement.setString(3, now);
                 statement.addBatch();
 
                 batchSize++;

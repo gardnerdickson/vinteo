@@ -12,11 +12,7 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
-import java.util.concurrent.LinkedBlockingQueue;
+import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 
@@ -173,23 +169,29 @@ public class EventMediator {
         Task<Void> rescanTask = new Task<Void>() {
             @Override
             protected Void call() throws Exception {
-                logger.info("Clearing items.");
                 final AtomicInteger count = new AtomicInteger(0);
                 Map<String, String> results = fileScanner.findAllFilePaths((path) -> {
                     count.getAndIncrement();
                     updateMessage("Items scanned: " + count.get());
                     return null;
                 });
-                List<Item> items = results
+
+                List<Item> existingItems = itemRepository.findAllItems();
+                Set<String> existingPaths = existingItems.stream().map(Item::getPath).collect(Collectors.toSet());
+                Map<String, String> newFilesScanned = results
                         .entrySet()
                         .stream()
-                        .map(entry -> new Item(null, entry.getValue(), entry.getKey()))
+                        .filter(entry -> !existingPaths.contains(entry.getValue()))
+                        .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
+                List<Item> newItems = newFilesScanned
+                        .entrySet()
+                        .stream()
+                        .map(entry -> new Item(null, entry.getValue(), entry.getKey(), null))
                         .collect(Collectors.toList());
                 logger.info("Adding items.");
-                updateMessage("Adding " + items.size() + " items to database...");
-                itemRepository.clearItems();
-                itemRepository.addItems(items);
-                logger.info("Done adding {} items", items.size());
+                updateMessage("Adding " + newItems.size() + " items to database...");
+                itemRepository.addItems(newItems);
+                logger.info("Done adding {} items", newItems.size());
                 updateMessage("");
                 return null;
             }

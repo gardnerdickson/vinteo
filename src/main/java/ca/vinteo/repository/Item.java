@@ -4,6 +4,8 @@ import com.google.common.collect.ImmutableList;
 
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 
 public class Item {
@@ -11,18 +13,21 @@ public class Item {
     private Integer id;
     private String path;
     private String name;
+    private LocalDateTime dateTimeAdded;
 
-    public Item(Integer id, String path, String name) {
+    public Item(Integer id, String path, String name, LocalDateTime dateTimeAdded) {
         this.id = id;
         this.path = path;
         this.name = name;
+        this.dateTimeAdded = dateTimeAdded;
     }
 
     static Item createFromResultSet(ResultSet resultSet) throws SQLException {
         return new Item(
                 resultSet.getInt("item_id"),
                 resultSet.getString("path"),
-                resultSet.getString("name")
+                resultSet.getString("name"),
+                LocalDateTime.parse(resultSet.getString("date_time_added"), DateTimeFormatter.ISO_LOCAL_DATE_TIME)
         );
     }
 
@@ -46,12 +51,17 @@ public class Item {
         return name;
     }
 
+    public LocalDateTime getDateTimeAdded() {
+        return dateTimeAdded;
+    }
+
     @Override
     public String toString() {
         return "Item{" +
                 "id=" + id +
                 ", path='" + path + '\'' +
                 ", name='" + name + '\'' +
+                ", dateTimeAdded=" + dateTimeAdded +
                 '}';
     }
 }

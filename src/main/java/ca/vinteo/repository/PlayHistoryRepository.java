@@ -1,7 +1,6 @@
 package ca.vinteo.repository;
 
 import ca.vinteo.ui.EventMediator;
-import com.google.common.collect.ImmutableList;
 
 import java.io.File;
 import java.sql.PreparedStatement;

@@ -18,6 +18,8 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.time.LocalDateTime;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -66,14 +68,15 @@ public final class Main extends Application {
 
         // If there are no items in the database, scan for items
         if (items.isEmpty()) {
+            final LocalDateTime now = LocalDateTime.now();
             Map<String, String> filePaths = fileScanner.findAllFilePaths((num) -> null);
-            items = filePaths.entrySet().stream().map(entry -> new Item(null, entry.getValue(), entry.getKey())).collect(Collectors.toList());
+            items = filePaths.entrySet().stream().map(entry -> new Item(null, entry.getValue(), entry.getKey(), now)).collect(Collectors.toList());
             itemRepository.addItems(items);
         }
 
         new DesktopUtil(eventMediator);
         new VlcLauncher(config.getVlcCommand(), config.getTempDirectory(), eventMediator);
-        List<String> resultItems = items.stream().map(Item::getName).collect(Collectors.toList());
+        List<String> resultItems = items.stream().sorted(Comparator.comparing(Item::getDateTimeAdded).reversed()).map(Item::getName).collect(Collectors.toList());
         MainWindow mainWindow = new MainWindow(primaryStage, eventMediator, FXCollections.observableArrayList(resultItems));
         mainWindow.setup();
 
