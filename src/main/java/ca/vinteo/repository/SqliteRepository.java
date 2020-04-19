@@ -2,7 +2,8 @@ package ca.vinteo.repository;
 
 import java.io.BufferedReader;
 import java.io.IOException;
-import java.io.Reader;
+import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.SQLException;
@@ -24,9 +25,9 @@ public abstract class SqliteRepository {
         return DriverManager.getConnection(connectionString);
     }
 
-    public static void executeSqlScript(Reader reader, Connection connection) throws SQLException, RepositoryException {
+    public static void executeSqlScript(InputStream inputStream, Connection connection) throws SQLException, RepositoryException {
         String scriptContents;
-        try (BufferedReader bufferedReader = new BufferedReader(reader)) {
+        try (BufferedReader bufferedReader = new BufferedReader(new InputStreamReader(inputStream))) {
             scriptContents = bufferedReader.lines().collect(Collectors.joining("\n"));
         } catch (IOException e) {
             throw new RepositoryException("Failed to read script");
