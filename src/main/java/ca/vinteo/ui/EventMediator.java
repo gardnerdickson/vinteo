@@ -172,7 +172,7 @@ public class EventMediator {
                 final AtomicInteger count = new AtomicInteger(0);
                 Map<String, String> results = fileScanner.findAllFilePaths((path) -> {
                     count.getAndIncrement();
-                    updateMessage("Items scanned: " + count.get());
+                    updateMessage("[LABEL]Items scanned: " + count.get());
                     return null;
                 });
 
@@ -189,15 +189,31 @@ public class EventMediator {
                         .map(entry -> new Item(null, entry.getValue(), entry.getKey(), null))
                         .collect(Collectors.toList());
                 logger.info("Adding items.");
-                updateMessage("Adding " + newItems.size() + " items to database...");
+                updateMessage("[LABEL]Adding " + newItems.size() + " items to database...");
                 itemRepository.addItems(newItems);
                 logger.info("Done adding {} items", newItems.size());
-                updateMessage("");
+                updateMessage("[UPDATE_RESULT_VIEW]");
                 return null;
             }
         };
         rescanTask.messageProperty().addListener((obs, oldMessage, newMessage) ->  {
-            mainWindow.setStatusBarLabel(newMessage);
+            if (newMessage.startsWith("[LABEL]")) {
+                mainWindow.setStatusBarLabel(newMessage.replace("[LABEL]", ""));
+            } else if (newMessage.startsWith("[UPDATE_RESULT_VIEW]")) {
+                // Find all items again so we can sort by date added.
+                try {
+                    List<String> sortedItemNames = itemRepository
+                            .findAllItems()
+                            .stream()
+                            .sorted(Comparator.comparing(Item::getDateTimeAdded).reversed())
+                            .map(Item::getName)
+                            .collect(Collectors.toList());
+                    mainWindow.setStatusBarLabel("");
+                    mainWindow.updateResultView(sortedItemNames);
+                } catch (RepositoryException e) {
+                    throw new RuntimeException(e);
+                }
+            }
         });
         new Thread(rescanTask).start();
     }
