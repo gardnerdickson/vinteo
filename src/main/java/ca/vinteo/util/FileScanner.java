@@ -1,4 +1,4 @@
-package ca.vinteo;
+package ca.vinteo.util;
 
 import ca.vinteo.ui.EventMediator;
 import com.google.common.base.Joiner;
@@ -9,11 +9,7 @@ import java.io.IOException;
 import java.nio.file.DirectoryStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Set;
-import java.util.concurrent.LinkedBlockingQueue;
+import java.util.*;
 import java.util.function.Function;
 
 public class FileScanner {
@@ -29,21 +25,21 @@ public class FileScanner {
         eventMediator.setFileScanner(this);
     }
 
-    public Map<String, String> findAllFilePaths(Function<Path, Void> callback) throws IOException {
+    public Set<FileInfo> findAllFilePaths(Function<Path, Void> callback) throws IOException {
         logger.info("Finding all files in directories: '{}'. Filtering on extensions: {}", Joiner.on(", '").join(directories), Joiner.on(", ").join(allowedExtensions));
         return traversePaths(directories, allowedExtensions, callback);
     }
 
-    private Map<String, String> traversePaths(Iterable<Path> rootDirectories, Set<String> extensions, Function<Path, Void> callback) throws IOException {
-        Map<String, String> fileItems = new HashMap<>();
+    private Set<FileInfo> traversePaths(Iterable<Path> rootDirectories, Set<String> extensions, Function<Path, Void> callback) throws IOException {
+        Set<FileInfo> fileItems = new HashSet<>();
         for (Path directory : rootDirectories) {
             DirectoryStream<Path> directoryStream = Files.newDirectoryStream(directory);
             for (Path path : directoryStream) {
                 if (Files.isDirectory(path)) {
-                    fileItems.putAll(traversePaths(Collections.singletonList(path), extensions, callback));
+                    fileItems.addAll(traversePaths(Collections.singletonList(path), extensions, callback));
                 }
                 if (Files.isRegularFile(path) && extensions.contains(com.google.common.io.Files.getFileExtension(path.getFileName().toString()))) {
-                    fileItems.put(path.getFileName().toString(), path.toString());
+                    fileItems.add(new FileInfo(path.getFileName().toString(), path.toString()));
                     callback.apply(path);
                 }
             }

@@ -11,15 +11,14 @@ import java.sql.SQLException;
 import java.sql.Statement;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
 
 public class ItemRepository extends SqliteRepository {
 
     private static final Logger logger = LoggerFactory.getLogger(ItemRepository.class);
 
     private static final String INSERT = "INSERT INTO item (path, name, date_time_added) values (?, ?, ?)";
+    private static final String DELETE_BY_PATH = "DELETE FROM item WHERE path = ?";
     private static final String FIND_ALL = "SELECT * FROM item";
     private static final String TRUNCATE = "DELETE FROM item";
     private static final String FIND_BY_NAME = "SELECT * FROM item WHERE name = ?";
@@ -37,7 +36,7 @@ public class ItemRepository extends SqliteRepository {
         }
     }
 
-    public void addItems(List<Item> items) throws RepositoryException {
+    public void addItems(Collection<Item> items) throws RepositoryException {
         final String now = LocalDateTime.now().format(DateTimeFormatter.ISO_LOCAL_DATE_TIME);
         try (PreparedStatement statement = newConnection().prepareStatement(INSERT)) {
             int batchSize = 0;
@@ -54,6 +53,23 @@ public class ItemRepository extends SqliteRepository {
             }
         } catch (SQLException e) {
             throw new RepositoryException("Failed to add items", e);
+        }
+    }
+
+    public void removeItems(Set<String> paths) throws RepositoryException {
+        try (PreparedStatement statement = newConnection().prepareStatement(DELETE_BY_PATH)) {
+            int batchSize = 0;
+            for (String path : paths) {
+                statement.setString(1, path);
+                statement.addBatch();
+
+                batchSize++;
+                if (batchSize % 100 == 0 || batchSize == paths.size()) {
+                    statement.executeBatch();
+                }
+            }
+        } catch (SQLException e) {
+            throw new RepositoryException("Failed to delete items.", e);
         }
     }
 

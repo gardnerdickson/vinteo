@@ -7,6 +7,8 @@ import ca.vinteo.ui.EventMediator;
 import ca.vinteo.ui.MainWindow;
 import ca.vinteo.ui.SettingsWindow;
 import ca.vinteo.util.DesktopUtil;
+import ca.vinteo.util.FileInfo;
+import ca.vinteo.util.FileScanner;
 import ca.vinteo.util.VlcLauncher;
 import javafx.application.Application;
 import javafx.collections.FXCollections;
@@ -69,8 +71,8 @@ public final class Main extends Application {
         // If there are no items in the database, scan for items
         if (items.isEmpty()) {
             final LocalDateTime now = LocalDateTime.now();
-            Map<String, String> filePaths = fileScanner.findAllFilePaths((num) -> null);
-            items = filePaths.entrySet().stream().map(entry -> new Item(null, entry.getValue(), entry.getKey(), now)).collect(Collectors.toList());
+            Set<FileInfo> filePaths = fileScanner.findAllFilePaths((num) -> null);
+            items = filePaths.stream().map(entry -> new Item(null, entry.getPath(), entry.getName(), now)).collect(Collectors.toList());
             itemRepository.addItems(items);
         }
 

@@ -1,6 +1,7 @@
 package ca.vinteo.ui;
 
-import ca.vinteo.FileScanner;
+import ca.vinteo.util.FileInfo;
+import ca.vinteo.util.FileScanner;
 import ca.vinteo.repository.*;
 import ca.vinteo.util.DesktopUtil;
 import ca.vinteo.util.VlcLauncher;
@@ -14,6 +15,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.function.BiFunction;
 import java.util.stream.Collectors;
 
 public class EventMediator {
@@ -169,30 +171,55 @@ public class EventMediator {
         Task<Void> rescanTask = new Task<Void>() {
             @Override
             protected Void call() throws Exception {
+
+                BiFunction<Set<FileInfo>, Set<String>, Void> removeItems = (filesScanned, existingPaths) -> {
+                    Set<String> pathsScanned = filesScanned.stream().map(FileInfo::getPath).collect(Collectors.toSet());
+                    Set<String> removedPaths = existingPaths
+                            .stream()
+                            .filter(path -> !pathsScanned.contains(path))
+                            .collect(Collectors.toSet());
+                    if (!removedPaths.isEmpty()) {
+                        logger.info("Removing items.");
+                        updateMessage("[LABEL]Removing " + removedPaths.size() + " items from database...");
+                        try {
+                            itemRepository.removeItems(removedPaths);
+                        } catch (RepositoryException e) {
+                            throw new RuntimeException(e);
+                        }
+                        logger.info("Done removing {} items.", removedPaths.size());
+                    }
+                    return null;
+                };
+
+                BiFunction<Set<FileInfo>, Set<String>, Void> addItems = (filesScanned, existingPaths) -> {
+                    Set<Item> newItems = filesScanned
+                            .stream()
+                            .filter(file -> !existingPaths.contains(file.getPath()))
+                            .map(file -> new Item(null, file.getPath(), file.getName(), null))
+                            .collect(Collectors.toSet());
+                    logger.info("Adding items.");
+                    updateMessage("[LABEL]Adding " + newItems.size() + " items to database...");
+                    try {
+                        itemRepository.addItems(newItems);
+                    } catch (RepositoryException e) {
+                        throw new RuntimeException(e);
+                    }
+                    logger.info("Done adding {} items", newItems.size());
+                    return null;
+                };
+
                 final AtomicInteger count = new AtomicInteger(0);
-                Map<String, String> results = fileScanner.findAllFilePaths((path) -> {
+                Set<FileInfo> filesScanned = fileScanner.findAllFilePaths((path) -> {
                     count.getAndIncrement();
                     updateMessage("[LABEL]Items scanned: " + count.get());
                     return null;
                 });
+                Set<String> existingPaths = itemRepository.findAllItems().stream().map(Item::getPath).collect(Collectors.toSet());
 
-                List<Item> existingItems = itemRepository.findAllItems();
-                Set<String> existingPaths = existingItems.stream().map(Item::getPath).collect(Collectors.toSet());
-                Map<String, String> newFilesScanned = results
-                        .entrySet()
-                        .stream()
-                        .filter(entry -> !existingPaths.contains(entry.getValue()))
-                        .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
-                List<Item> newItems = newFilesScanned
-                        .entrySet()
-                        .stream()
-                        .map(entry -> new Item(null, entry.getValue(), entry.getKey(), null))
-                        .collect(Collectors.toList());
-                logger.info("Adding items.");
-                updateMessage("[LABEL]Adding " + newItems.size() + " items to database...");
-                itemRepository.addItems(newItems);
-                logger.info("Done adding {} items", newItems.size());
+                removeItems.apply(filesScanned, existingPaths);
+                addItems.apply(filesScanned, existingPaths);
                 updateMessage("[UPDATE_RESULT_VIEW]");
+
                 return null;
             }
         };
