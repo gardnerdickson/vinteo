@@ -33,11 +33,13 @@ public class DatabaseChangelogRepository extends SqliteRepository {
 
     public void checkAndExecuteUpdates(boolean firstTimeSetup) throws RepositoryException {
         try (Connection connection = newConnection()) {
+            int fileNum = 3;
             // If this is the first time the application has been run, create the changelog table
             if (firstTimeSetup) {
                 logger.info("Performing first time setup on database.");
                 executeScript(SCRIPT_LOCATION + "/update_1.sql", connection);
                 insertChangelog(SCRIPT_LOCATION + "/update_1.sql", connection);
+                fileNum = 2;
             // If this is an existing installation but there is no changelog table, execute update_1 to create the changelog table,
             // then add update_1 and update_2 to the changelog table.
             } else if (!checkIfTableExists(CHANGELOG_TABLE_NAME, connection)) {
@@ -55,7 +57,6 @@ public class DatabaseChangelogRepository extends SqliteRepository {
             changelogItems = new ArrayList<>(DatabaseChangelogItem.createListFromResultSet(resultSet));
             Set<String> scriptNames = changelogItems.stream().map(DatabaseChangelogItem::getScriptName).collect(Collectors.toSet());
 
-            int fileNum = 3;
             boolean noMoreUpdateScripts = false;
             do {
                 try {
