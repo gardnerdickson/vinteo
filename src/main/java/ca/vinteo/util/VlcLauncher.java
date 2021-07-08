@@ -29,14 +29,24 @@ public final class VlcLauncher {
     }
 
     public void launch(Path filename) throws IOException {
-        URL templateUrl = Resources.getResource(COMMAND_TEMPLATE);
-        String template = Resources.toString(templateUrl, StandardCharsets.UTF_8);
-        String command = template.replace("{VLC}", vlcExec).replace("{FILENAME}", filename.toString());
-        logger.info("Generated command is '{}'", command);
-        File execFile = new File(Paths.get(tempDirectory, TEMP_FILENAME).toString());
-        execFile.delete();
-        Files.asCharSink(execFile, StandardCharsets.UTF_8).write(command);
-        logger.info("Executing command.");
-        Runtime.getRuntime().exec(execFile.getAbsoluteFile().toString());
+        String os = System.getProperty("os.name");
+        if (os.startsWith("Windows")) {
+            URL templateUrl = Resources.getResource(COMMAND_TEMPLATE);
+            String template = Resources.toString(templateUrl, StandardCharsets.UTF_8);
+            String command = template.replace("{VLC}", vlcExec).replace("{FILENAME}", filename.toString());
+            logger.info("Generated command is '{}'", command);
+            File execFile = new File(Paths.get(tempDirectory, TEMP_FILENAME).toString());
+            execFile.delete();
+            Files.asCharSink(execFile, StandardCharsets.UTF_8).write(command);
+            logger.info("Executing command.");
+            Runtime.getRuntime().exec(execFile.getAbsoluteFile().toString());
+        } else if (os.startsWith("Linux")) {
+            Runtime runtime = Runtime.getRuntime();
+            String[] command = new String[]{vlcExec, "--fullscreen", "--sub-track", "999", filename.toString()};
+            logger.info("Opening '{}' with VLC. Executing command: {}", filename.toString(), command);
+            runtime.exec(command);
+        } else {
+            throw new UnsupportedOperationException("Unrecognized platform: " + os);
+        }
     }
 }
