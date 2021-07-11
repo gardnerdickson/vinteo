@@ -16,15 +16,16 @@ public final class Vlc {
     private enum OS {WINDOWS, LINUX}
 
     private static final Logger logger = LoggerFactory.getLogger(Vlc.class);
-    private static final Long PROCESS_CHECK_INTERVAL_MS = 5000L;
 
     private final String vlcExec;
+    private final Long connectionCheckIntervalMs;
     private final OS currentOs;
 
     private Long vlcProcessId = -1L;
 
-    public Vlc(String vlcExec, EventMediator eventMediator) {
+    public Vlc(String vlcExec, Long connectionCheckIntervalMs, EventMediator eventMediator) {
         this.vlcExec = vlcExec;
+        this.connectionCheckIntervalMs = connectionCheckIntervalMs;
         String os = System.getProperty("os.name");
         if (os.startsWith("Windows")) {
             this.currentOs = OS.WINDOWS;
@@ -53,7 +54,7 @@ public final class Vlc {
         new Thread(() -> {
             try {
                 while (true) {
-                    Thread.sleep(PROCESS_CHECK_INTERVAL_MS);
+                    Thread.sleep(this.connectionCheckIntervalMs);
                     logger.debug("Checking if VLC is still running.");
                     if (isVlcProcessRunning()) {
                         // Keep the connection alive if the file playing is on a network

@@ -20,12 +20,14 @@ public final class ApplicationConfiguration {
     private static final String USER_SETTINGS_PROPERTY = "usersettings.file";
     private static final String SQL_FILE_PROPERTY = "sqlite.file";
     private static final String TEMP_DIRECTORY_PROPERTY = "temp.dir";
+    private static final String CONNECTION_CHECK_INTERVAL_MS = "connectionCheck.interval.ms";
     private static final String DEFAULT_CONFIG_FILE_NAME = "config.properties";
 
     private final String vlcCommand;
     private final String userSettingsFile;
     private final String sqliteFile;
     private final String tempDirectory;
+    private final Long connectionCheckIntervalMs;
 
     ApplicationConfiguration() throws IOException {
         this(null);
@@ -69,6 +71,12 @@ public final class ApplicationConfiguration {
             tempDirectory = property.orElseThrow(() -> new NoSuchElementException("'" + TEMP_DIRECTORY_PROPERTY + "' property not found."));
         }
 
+        {
+            logger.debug("Looking up property: {}", CONNECTION_CHECK_INTERVAL_MS);
+            Optional<String> property = Optional.ofNullable(properties.getProperty(CONNECTION_CHECK_INTERVAL_MS));
+            connectionCheckIntervalMs = Long.parseLong(property.orElseThrow(() -> new NoSuchElementException("'" + CONNECTION_CHECK_INTERVAL_MS + "' property not found.")));
+        }
+
     }
 
     public String getUserSettingsFile() {
@@ -85,5 +93,9 @@ public final class ApplicationConfiguration {
 
     public String getTempDirectory() {
         return tempDirectory;
+    }
+
+    public Long getConnectionCheckIntervalMs() {
+        return connectionCheckIntervalMs;
     }
 }
