@@ -4,7 +4,7 @@ import ca.vinteo.util.FileInfo;
 import ca.vinteo.util.FileScanner;
 import ca.vinteo.repository.*;
 import ca.vinteo.util.DesktopUtil;
-import ca.vinteo.util.VlcLauncher;
+import ca.vinteo.util.Vlc;
 import javafx.concurrent.Task;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -26,7 +26,7 @@ public class EventMediator {
     private SettingsWindow settingsWindow;
     private AddDirectoryWindow addDirectoryWindow;
     private FileScanner fileScanner;
-    private VlcLauncher vlcLauncher;
+    private Vlc vlc;
     private DesktopUtil desktopUtil;
     private UserSettingsRepository userSettingsRepository;
     private UserSettings userSettings;
@@ -45,8 +45,8 @@ public class EventMediator {
         this.fileScanner = fileScanner;
     }
 
-    public void setVlcLauncher(VlcLauncher vlcLauncher) {
-        this.vlcLauncher = vlcLauncher;
+    public void setVlcLauncher(Vlc vlc) {
+        this.vlc = vlc;
     }
 
     public void setDesktopUtil(DesktopUtil desktopUtil) {
@@ -250,7 +250,7 @@ public class EventMediator {
             Item item = itemRepository.findByName(itemName).orElseThrow(() -> new RuntimeException("Item not found: " + itemName));
             String filePathStr = item.getPath();
             Path filePath = Paths.get(filePathStr);
-            vlcLauncher.launch(filePath);
+            vlc.launch(filePath);
             logItemToPlayHistory(item);
         } catch (IOException | RepositoryException e) {
             throw new RuntimeException("Failed to play file.", e);
