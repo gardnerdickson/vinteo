@@ -16,6 +16,7 @@ import javafx.stage.Stage;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -23,6 +24,7 @@ import java.nio.file.Paths;
 import java.time.LocalDateTime;
 import java.util.Comparator;
 import java.util.List;
+import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -65,14 +67,21 @@ public final class Main extends Application {
 
         ItemRepository itemRepository = new ItemRepository(config.getSqliteFile(), eventMediator);
         List<Item> items = itemRepository.findAllItems();
-        new PlayHistoryRepository(config.getSqliteFile(), eventMediator);
+        PlayHistoryRepository playHistoryRepository = new PlayHistoryRepository(config.getSqliteFile(), eventMediator);
 
         // If there are no items in the database, scan for items
+        // Otherwise, check if the most recently played file exists to wake up the network connection
         if (items.isEmpty()) {
             final LocalDateTime now = LocalDateTime.now();
             Set<FileInfo> filePaths = fileScanner.findAllFilePaths((num) -> null);
             items = filePaths.stream().map(entry -> new Item(null, entry.getPath(), entry.getName(), now)).collect(Collectors.toList());
             itemRepository.addItems(items);
+        } else {
+            Optional<PlayHistoryItem> item = playHistoryRepository.getMostRecentlyPlayedFile();
+            item.ifPresent(playHistoryItem -> {
+                logger.debug("Checking if file exists: {}", playHistoryItem.getPath());
+                new File(playHistoryItem.getPath()).exists();
+            });
         }
 
         new DesktopUtil(eventMediator);
