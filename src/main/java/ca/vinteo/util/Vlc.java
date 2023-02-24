@@ -22,7 +22,7 @@ public final class Vlc {
     private enum OS {WINDOWS, LINUX}
 
     private static final Logger logger = LoggerFactory.getLogger(Vlc.class);
-    private static final String COMMAND_TEMPLATE = "cmd_template.txt";
+    private static final String COMMAND_TEMPLATE = "vlc_exec_template.txt";
     private static final String TEMP_FILENAME = "vlc_exec.bat";
 
     private final String vlcExec;

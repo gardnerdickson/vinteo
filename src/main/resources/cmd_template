@@ -1,0 +1,2 @@
+@echo off
+start javaw -jar vinteo-X.X.jar config.properties
