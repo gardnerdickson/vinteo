@@ -16,7 +16,7 @@ public class FileScanner {
 
     private static final Logger logger = LoggerFactory.getLogger(FileScanner.class);
 
-    private final Set<Path> directories;
+    private Set<Path> directories;
     private final Set<String> allowedExtensions;
 
     public FileScanner(Set<Path> directories, Set<String> allowedExtensions, EventMediator eventMediator) {
@@ -45,6 +45,11 @@ public class FileScanner {
             }
         }
         return fileItems;
+    }
+
+
+    public void setDirectories(Set<Path> directories) {
+        this.directories = directories;
     }
 
 }

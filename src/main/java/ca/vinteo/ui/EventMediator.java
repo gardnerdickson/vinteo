@@ -156,6 +156,8 @@ public class EventMediator {
             throw new RuntimeException(e);
         }
         settingsWindow.setDirectories(userSettings.getDirectories());
+        Set<Path> paths = userSettings.getDirectories().stream().map(Paths::get).collect(Collectors.toSet());
+        fileScanner.setDirectories(paths);
         addDirectoryWindow.hide();
     }
 
